@@ -1,0 +1,939 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>QA Artimañas 2026</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: columna única de cards-ticket; cada card = Figma | Código + tabla "ahora → debe ser". Grilla de 8. */
+:root{
+  --bg:#f6f4f7; --surface:#ffffff; --surface-2:#efebf1; --line:#ddd6e0;
+  --fg:#1c1620; --muted:#6b6070; --accent:#7a3fa0; --accent-soft:#efe4f6;
+  --figma:#7a3fa0; --code:#b2532a;
+  --high:#c0362c; --mid:#b07400; --low:#3f7a52; --done:#3f7a52;
+  --font:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#110910; --surface:#1b121b; --surface-2:#251a26; --line:#3a2b3a;
+  --fg:#f5f4f5; --muted:#b8adb7; --accent:#d4a6ec; --accent-soft:#33203b;
+  --figma:#d4a6ec; --code:#f0a07a;
+  --high:#ff7a6e; --mid:#f2c14e; --low:#7fd197; --done:#7fd197; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#110910; --surface:#1b121b; --surface-2:#251a26; --line:#3a2b3a;
+  --fg:#f5f4f5; --muted:#b8adb7; --accent:#d4a6ec; --accent-soft:#33203b;
+  --figma:#d4a6ec; --code:#f0a07a;
+  --high:#ff7a6e; --mid:#f2c14e; --low:#7fd197; --done:#7fd197; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:400 16px/24px var(--font);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 64px}
+.wrap{max-width:1120px;margin:0 auto}
+header.top{padding-block:48px 24px;display:grid;gap:16px}
+.eyebrow{font:500 12px/16px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+h1{font:600 40px/48px var(--font);margin:0;text-wrap:balance;letter-spacing:-.01em}
+.lead{color:var(--muted);max-width:680px;margin:0}
+.meta-row{display:flex;flex-wrap:wrap;gap:8px 24px;font:400 14px/20px var(--font);color:var(--muted)}
+.meta-row b{color:var(--fg);font-weight:500}
+.sticky{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:16px;border-bottom:1px solid var(--line);display:grid;gap:12px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:4px;background:var(--surface-2);border-radius:12px}
+.vp-tab{border:0;background:transparent;color:var(--muted);border-radius:8px;padding:8px 12px;cursor:pointer;display:grid;gap:0;text-align:center;font:600 14px/20px var(--font)}
+.vp-tab small{font:500 12px/16px var(--mono);color:var(--muted)}
+.vp-tab[aria-selected="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.vp-tab:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.compare.tall .shot img{max-height:640px}
+.asset{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start}
+.asset-preview{width:96px;height:96px;display:grid;place-items:center;background:#110910;border:1px solid var(--line);border-radius:12px}
+.asset-preview svg{width:56px;height:56px}
+.asset-code{min-width:0;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.asset-head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;background:var(--surface-2);font:500 12px/16px var(--mono);color:var(--muted)}
+.asset pre{margin:0;padding:12px;max-height:120px;overflow:auto;font:400 12px/16px var(--mono);white-space:pre-wrap;word-break:break-all;color:var(--muted)}
+@media (max-width:720px){.asset{grid-template-columns:1fr}}
+.progress{display:flex;align-items:center;gap:16px}
+.bar{flex:1;height:8px;border-radius:8px;background:var(--surface-2);overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--done);transition:width .32s}
+.count{font:500 14px/20px var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.filters{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:var(--surface);color:var(--fg);font:500 14px/20px var(--font);padding:6px 12px;border-radius:999px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.chip:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.toggle-done{margin-left:auto}
+section.page{margin-top:40px}
+section.page>h2{font:600 24px/32px var(--font);margin:0 0 16px;display:flex;align-items:baseline;gap:12px}
+section.page>h2 small{font:400 14px/20px var(--mono);color:var(--muted)}
+.cards{display:grid;gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.card-head{display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:center;padding:16px 24px}
+.check{appearance:none;width:24px;height:24px;border:2px solid var(--muted);border-radius:6px;margin:0;cursor:pointer;display:grid;place-content:center;background:var(--surface)}
+.check:checked{background:var(--done);border-color:var(--done)}
+.check:checked::after{content:"";width:12px;height:6px;border:2px solid var(--surface);border-top:0;border-right:0;transform:rotate(-45deg) translate(1px,-2px)}
+.title{min-width:0}
+.title h3{font:600 18px/26px var(--font);margin:0;text-wrap:balance}
+.title .sub{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;font:500 12px/16px var(--mono);color:var(--muted)}
+.sev{font:600 12px/16px var(--mono);text-transform:uppercase;letter-spacing:.06em;padding:4px 8px;border-radius:6px;border:1px solid currentColor}
+.st{font:600 12px/16px var(--mono);padding:4px 8px;border-radius:6px;background:var(--accent-soft);color:var(--accent)}
+.st-parcial{background:color-mix(in srgb,var(--mid) 18%,transparent);color:var(--mid)}
+.sev.alta{color:var(--high)}.sev.media{color:var(--mid)}.sev.baja{color:var(--low)}
+.expand{background:none;border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:4px 10px;font:500 12px/16px var(--mono);cursor:pointer}
+.card-body{padding:0 24px 24px;display:grid;gap:20px}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.shot{margin:0;display:grid;gap:8px;min-width:0}
+.shot figcaption{font:600 12px/16px var(--mono);letter-spacing:.08em;text-transform:uppercase;display:flex;align-items:center;gap:8px}
+.shot figcaption::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}
+.shot.f figcaption{color:var(--figma)}.shot.w figcaption{color:var(--code)}
+.shot button{padding:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#000;cursor:zoom-in;display:block;width:100%}
+.shot img{display:block;width:100%;height:auto;max-height:420px;object-fit:contain}
+.shot.f button{border-color:color-mix(in srgb,var(--figma) 50%,var(--line))}
+.shot.w button{border-color:color-mix(in srgb,var(--code) 50%,var(--line))}
+.why{margin:0;color:var(--fg);max-width:760px}
+.where{font:400 13px/20px var(--mono);color:var(--muted)}
+.where code{color:var(--fg);background:var(--surface-2);padding:2px 6px;border-radius:4px}
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+table{border-collapse:collapse;width:100%;min-width:560px;font:400 14px/20px var(--font)}
+th{font:600 12px/16px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:left;padding:10px 16px;background:var(--surface-2)}
+td{padding:12px 16px;border-top:1px solid var(--line);vertical-align:top}
+td.prop{font-weight:500;width:28%}
+td.now{color:var(--code)}
+td.now .v{text-decoration:line-through;text-decoration-color:color-mix(in srgb,var(--code) 60%,transparent)}
+.v{font:400 13px/20px var(--mono);word-break:break-word}
+.to-cell{display:flex;gap:8px;align-items:flex-start;justify-content:space-between}
+.to-cell .v{color:var(--fg);font-weight:500}
+.sw{display:inline-block;width:14px;height:14px;border-radius:4px;border:1px solid var(--line);vertical-align:-2px;margin-right:6px}
+.copy{flex:none;border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:6px;font:500 12px/16px var(--mono);padding:4px 8px;cursor:pointer}
+.copy.ok{color:var(--done);border-color:var(--done)}
+.actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn-prompt{border:0;background:var(--fg);color:var(--bg);font:500 14px/20px var(--font);padding:10px 16px;border-radius:999px;cursor:pointer}
+.btn-prompt.ok{background:var(--done)}
+.note{font:400 14px/20px var(--font);color:var(--muted);border-left:2px solid var(--line);padding-left:12px;margin:0}
+/* estado tachado */
+.card.done .card-body{display:none}
+.card.done .title h3{text-decoration:line-through;color:var(--muted)}
+.card.done{background:transparent}
+.card.done.open .card-body{display:grid}
+/* checklist final */
+.final{margin-top:64px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:24px}
+.final h2{font:600 24px/32px var(--font);margin:0 0 8px}
+.final ol{list-style:none;margin:16px 0 0;padding:0;columns:2 360px;column-gap:32px}
+.final li{break-inside:avoid;display:grid;grid-template-columns:auto 1fr;gap:12px;padding:8px 0;border-bottom:1px solid var(--line);align-items:start}
+.final li label{cursor:pointer;font:400 14px/20px var(--font)}
+.final li label span{font:500 12px/16px var(--mono);color:var(--muted);margin-right:6px}
+.final li .check{width:20px;height:20px;border-radius:5px}
+.final li.done label{text-decoration:line-through;color:var(--muted)}
+.final li a{color:inherit;text-decoration:none}
+.final li a:hover{text-decoration:underline}
+.hidden-by-filter{display:none!important}
+/* lightbox */
+.lb{position:fixed;inset:0;background:rgba(10,6,10,.92);z-index:20;display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:max(24px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 24px max(16px,env(safe-area-inset-left,0px));align-items:center}
+.lb figure{margin:0;display:grid;gap:8px;min-width:0;max-height:100%}
+.lb figcaption{font:600 12px/16px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:#f5f4f5}
+.lb img{width:100%;max-height:calc(100vh - 120px);object-fit:contain;background:#000;border-radius:8px}
+.lb-close{position:absolute;top:max(16px,env(safe-area-inset-top,0px));right:max(16px,env(safe-area-inset-right,0px));border:0;border-radius:999px;background:#f5f4f5;color:#110910;font:600 14px/20px var(--font);padding:8px 16px;cursor:pointer}
+@media (max-width:720px){
+  h1{font-size:32px;line-height:40px}
+  .compare,.lb{grid-template-columns:1fr}
+  .card-head{padding:16px;grid-template-columns:auto 1fr}
+  .card-head .expand{grid-column:2;justify-self:start}
+  .card-body{padding:0 16px 16px}
+  .toggle-done{margin-left:0}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header class="top">
+    <h1>QA Artimañas 2026</h1>
+    <div class="meta-row">
+      <span>Viewport <b>1440 × 900 (desktop)</b></span>
+      <span>Fuente de verdad <b>Figma + Hand off + Librería UI</b></span>
+      <span>Web revisada <b>0nicolas00.github.io/artimanas-landing/2026/temporal · 17 nov</b></span>
+      <span>Grilla <b>8 pt, solo valores pares</b></span>
+    </div>
+  </header>
+
+  <div class="sticky">
+    <div class="tabs" id="tabs" role="tablist" aria-label="Tamaño de pantalla"></div>
+    <div class="progress"><div class="bar"><i id="bar"></i></div><span class="count" id="count">0 / 0</span></div>
+    <div class="filters" id="filters"></div>
+  </div>
+
+  <main id="list"></main>
+
+  <section class="final" id="checklist">
+    <h2>Checklist de cambios · <span id="final-vp"></span></h2>
+    <p class="lead">El mismo progreso que las cards, en lista corta. Tocá un ítem para ir a su card.</p>
+    <ol id="final"></ol>
+  </section>
+</div>
+
+<script>
+const SVG_HEART = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 7 7" width="20" height="20" shape-rendering="crispEdges" role="img" aria-label="corazón"><rect x="1" y="0" width="1" height="1" fill="#4e2d4d"/><rect x="2" y="0" width="1" height="1" fill="#4e2d4d"/><rect x="4" y="0" width="1" height="1" fill="#4e2d4d"/><rect x="5" y="0" width="1" height="1" fill="#4e2d4d"/><rect x="0" y="1" width="1" height="1" fill="#4e2d4d"/><rect x="1" y="1" width="1" height="1" fill="#9166d0"/><rect x="2" y="1" width="1" height="1" fill="#e7dc87"/><rect x="3" y="1" width="1" height="1" fill="#4e2d4d"/><rect x="4" y="1" width="1" height="1" fill="#9166d0"/><rect x="5" y="1" width="1" height="1" fill="#ebf154"/><rect x="6" y="1" width="1" height="1" fill="#4e2d4d"/><rect x="0" y="2" width="1" height="1" fill="#4e2d4d"/><rect x="1" y="2" width="1" height="1" fill="#9166d0"/><rect x="2" y="2" width="1" height="1" fill="#9166d0"/><rect x="3" y="2" width="1" height="1" fill="#9166d0"/><rect x="4" y="2" width="1" height="1" fill="#9166d0"/><rect x="5" y="2" width="1" height="1" fill="#9166d0"/><rect x="6" y="2" width="1" height="1" fill="#4e2d4d"/><rect x="0" y="3" width="1" height="1" fill="#4e2d4d"/><rect x="1" y="3" width="1" height="1" fill="#3105bd"/><rect x="2" y="3" width="1" height="1" fill="#9166d0"/><rect x="3" y="3" width="1" height="1" fill="#9166d0"/><rect x="4" y="3" width="1" height="1" fill="#9166d0"/><rect x="5" y="3" width="1" height="1" fill="#9166d0"/><rect x="6" y="3" width="1" height="1" fill="#4e2d4d"/><rect x="1" y="4" width="1" height="1" fill="#4e2d4d"/><rect x="2" y="4" width="1" height="1" fill="#3105bd"/><rect x="3" y="4" width="1" height="1" fill="#9166d0"/><rect x="4" y="4" width="1" height="1" fill="#9166d0"/><rect x="5" y="4" width="1" height="1" fill="#4e2d4d"/><rect x="2" y="5" width="1" height="1" fill="#4e2d4d"/><rect x="3" y="5" width="1" height="1" fill="#3105bd"/><rect x="4" y="5" width="1" height="1" fill="#4e2d4d"/><rect x="3" y="6" width="1" height="1" fill="#4e2d4d"/></svg>';
+const IMG = k => ({f:`${k}-f.jpg`, w:`${k}-w.jpg`});
+const PAGES = ['Global','Home','Menú','Modal de obra','Galería','Muestra 2026','Footer','Error 404','Metadata'];
+const DATA = [
+// ---------- GLOBAL ----------
+{id:'G-01',page:'Global',sev:'alta',title:'Los tokens de color no coinciden con Figma',img:null,
+ where:'base.css → :root',
+ why:'Los colores base del sitio están "casi" iguales pero no son los de la librería UI. Se nota sobre todo en los grises (texto secundario y bordes), que en la web quedan más fríos y más oscuros.',
+ changes:[
+  ['--surface-0 (fondo)','#10080f','#110910','Surface/surface_0'],
+  ['--text-base','#f5f0f5','#f5f4f5','Text/text_base'],
+  ['--text-muted','#bcb0c2','#b8adb7','Text/text_muted'],
+  ['--border','#544050','#7f6c7e','Border/border_base'],
+  ['Agregar --border-disabled','(no existe)','#605260','Border/border_disabled · líneas de la tabla del modal'],
+  ['Agregar --surface-active','(no existe)','#4e2d4d','Surface/surface_active · flechas del carrusel'],
+  ['Agregar --surface-inverted','(usa #ffffff)','#f6eff5','Surface/surface_inverted · botón Filtrar'],
+  ['Agregar --text-inverted','(usa #211921)','#2c252c','Text/text_inverted · texto sobre botones claros'],
+ ]},
+{id:'G-02',page:'Global',sev:'alta',title:'La escala tipográfica es inventada: hay que usar los estilos de Figma',img:null,
+ where:'base.css, catalog.css, overlays.css (todas las font-size / line-height)',
+ why:'La web usa tamaños sueltos (11, 12, 13, 15, 23,04, 115,2 px) e interlineados calculados con multiplicadores (22,4 · 27 · 16,5 · 14,3 · 19,5). Figma tiene seis estilos fijos; todo el texto tiene que caer en uno de ellos.',
+ changes:[
+  ['body/sm','13px · 14px/22,4','14px / 20px · 400',''],
+  ['body/md','15px/22,5 · 16px/20,8','16px / 24px · 400',''],
+  ['body/lg','18px / 27px','18px / 28px · 400',''],
+  ['heading/h4','—','18px / 26px · 590 (Semibold)',''],
+  ['heading/h1','23,04px / 26,5 · 500','28px / 36px · 590 (Semibold)',''],
+  ['display/sm','—','32px / 40px · 590 (Semibold)',''],
+  ['Textos de 11px y 12px','work-category, work-author, h2 lista, media-counter','Subir a body/sm (14/20) o al estilo que indica cada card',''],
+ ],
+ note:'Tip: definí estos seis estilos como variables (--body-sm, --body-md…) y que el resto del CSS solo las use.'},
+{id:'G-03',page:'Global',sev:'media',title:'Valores impares o fuera de la grilla de 8',img:null,
+ where:'varios archivos',
+ why:'El sistema trabaja en grilla de 8 con pasos pares. Estos valores rompen la regla y además no existen en Figma.',
+ changes:[
+  ['.student-list a padding','3px 6px 3px 12px','4px en los cuatro lados (ver H-06)',''],
+  ['.student-list a border-radius','5px','sin radius; 4px solo en el estado Focus (ver H-07)',''],
+  ['.ticket-copy padding','28px 25px','24px',''],
+  ['--page-margin','clamp(20px, 2vw, 40px) → 28,8px','80px',''],
+  ['.work-category margin','0 0 10px','gap 12px (spacing/12)',''],
+  ['line-height con decimales','22,4 · 27 · 16,5 · 14,3 · 19,5 · 26,496','usar los line-height enteros de G-02',''],
+ ]},
+// ---------- HOME ----------
+{id:'H-01',page:'Home',sev:'alta',title:'Nav: margen lateral y alto',img:'nav',
+ where:'base.css → :root (--page-margin, --nav-height) · .site-nav · .desktop-nav',
+ why:'En Figma el Navigation Bar tiene padding horizontal de 80 (spacing/80) y cada ítem 8 de padding, así que el texto arranca en x=88. En la web arranca en x=29, pegado al borde.',
+ changes:[
+  ['Margen lateral (--page-margin)','clamp(20px, 2vw, 40px) = 28,8px','80px','spacing/80'],
+  ['Padding de cada ítem','12px 0','8px',''],
+  ['Alto del nav (--nav-height)','76px','72px (padding vertical 16px)','spacing/16'],
+  ['Punto del ítem activo','—','6×6px, gap 8px con el texto',''],
+ ],
+ note:'Este mismo margen mueve la lista de alumnos (H-06). Cambiarlo arregla las dos cosas.'},
+{id:'H-02',page:'Home',sev:'media',title:'Logo del hero más grande que en el diseño',img:'logo',
+ where:'hero-layout.css → .logo-desktop',
+ why:'El logo "artimañas" ocupa 1100 × 210 y en Figma mide 1008 × 182, centrado (x = 216).',
+ changes:[['Tamaño .logo-desktop','1100 × 210px','1008 × 182px (width: 1008px; height: auto)','Logo · Frame 38']]},
+{id:'H-03',page:'Home',sev:'baja',title:'Óvalo "Muestra de arte interactivo"',img:'eyebrow',
+ where:'hero-layout.css → .eyebrow',
+ why:'En Figma el óvalo es un vector (Shape) de 310 × 77, apenas rotado y con trazo de 1,5px. En la web es un border-radius: 50% de 295 × 63 sin rotación, y el interlineado es 27.',
+ changes:[
+  ['Forma','border-radius: 50%, 295 × 63','SVG "Shape" exportado de Figma, 310 × 77, rotado ~2°',''],
+  ['Trazo','1px','1,5px blanco','Border weight/border-1-5'],
+  ['line-height','27px','28px','body/lg'],
+ ]},
+{id:'H-04',page:'Home',sev:'media',title:'Alto del hero y posición del marquee',img:'hero',
+ where:'hero-layout.css → .hero · .marquee',
+ why:'En Figma el hero mide 900 de alto y la cinta del marquee arranca en y = 740. En la web el hero mide 810, la cinta queda 32px más arriba y la lista de alumnos asoma en el primer pantallazo.',
+ changes:[
+  ['Alto de .hero','810px','900px (100vh en desktop)',''],
+  ['Top de la cinta .marquee','708px','740px',''],
+  ['line-height del marquee','27px','28px','body/lg'],
+  ['Separador entre textos','"•" chico','"*" (asterisco), como en Figma',''],
+  ['Alineación vertical de la cinta','textos y asteriscos desalineados: el "*" queda pegado arriba (el glifo del asterisco se dibuja alto en la línea)','todos los elementos centrados en el eje vertical de la cinta: display: flex; align-items: center en cada grupo; el "*" centrado con la altura de los textos (line-height: 1 + translateY, o un ícono/SVG de asterisco centrado)','Banner'],
+ ],
+ note:'La cinta es el mismo componente en todos los tamaños: la alineación se corrige una vez y aplica a desktop, tablet y mobile.'},
+{id:'H-13',page:'Home',sev:'alta',status:'nuevo',title:'Hero: sombras y oscurecido que no están en el diseño',img:'hero-fx',
+ where:'hero-layout.css → .logo-desktop · .eyebrow · .hero::before',
+ why:'El degradé que cambia en cada sesión es intencional y está bien. Lo que no está en Figma son los efectos que se sumaron encima: una sombra oscura alrededor del logo (que le ensucia el borde difuso), sombra en el óvalo y en su texto, y un oscurecido que arranca a mitad del hero y apaga la parte de abajo del logo. En Figma el logo es blanco con borde difuso, sin sombra, y el fondo pasa a negro recién debajo del marquee.',
+ changes:[
+  ['Sombra del logo (.logo-desktop)','filter: drop-shadow(0 1px 2px rgba(16, 8, 15, .9))','filter: none',''],
+  ['Sombra del óvalo (.eyebrow)','box-shadow: 0 1px 3px rgba(16, 8, 15, .4)','box-shadow: none',''],
+  ['Sombra del texto del óvalo','text-shadow: 0 1px 3px #10080f','text-shadow: none',''],
+  ['Oscurecido (.hero::before)','linear-gradient que empieza al 57% del hero (≈ y 460) y llega a #10080f','sin oscurecido sobre el logo: el paso a negro empieza debajo del marquee (≈ y 820), como en el frame Hero',''],
+  ['Degradé por sesión','varía en cada visita','dejarlo así (decisión de diseño)',''],
+ ],
+ note:'Si alguna sombra se agregó para mejorar el contraste con algún degradé muy claro, avisar a diseño para resolverlo desde la paleta del degradé y no con sombras.'},
+{id:'H-05',page:'Home',sev:'media',title:'Espacio entre el hero y la lista',img:null,
+ where:'catalog.css → .catalog / .student-sidebar',
+ why:'En Figma la sección de obras arranca 80px después del hero (y = 980). En la web arranca pegada (y = 810) y el título queda en 842.',
+ changes:[['Separación hero → lista','32px (margin-top del sidebar)','80px','spacing/80']]},
+{id:'H-06',page:'Home',sev:'alta',status:'parcial',title:'Lista de alumnos: tamaño, color y columna',img:'sidebar',
+ where:'catalog.css / student-links.css → .student-sidebar · #student-heading · .student-list li · .student-list a',
+ why:'En Figma cada nombre es un ítem del componente "Lista / Alumno": 18px, blanco base, con 4px de padding. En la web los nombres son de 14px, con padding desparejo y radius de 5px, y la columna es más angosta. Lo que ya cambiaron es el color, que forzaron a blanco puro con una regla que además anula el hover.',
+ changes:[
+  ['"Obras por alumno"','12px / 18px · #f5f0f5 (casi blanco, más chico que los nombres)','18px / 28px · #b8adb7 (gris apagado, mismo tamaño que los nombres)','body/lg · text_muted'],
+  ['Nombres: tipografía','14px / 22,4px','18px / 28px · 400','body/lg'],
+  ['Nombres: color','#ffffff forzado con #student-list a { color: #fff } (ya no es #887e8b)','#f5f4f5 · sacar la regla forzada para que funcionen los estados (ver H-07)','text_base'],
+  ['Padding del ítem','3px 6px 3px 12px · radius 5px','4px en los cuatro lados · sin radius (el radius de 4px es solo para el foco)','Lista / Alumno'],
+  ['Separación entre ítems','li margin-bottom 5px','8px (cada ítem mide 36px: 28 + 4 + 4)',''],
+  ['Opacidad de la lista','0.42 (estado preview)','1',''],
+  ['Ancho de columna','244px desde x=29','302px desde x=80',''],
+ ]},
+{id:'H-07',page:'Home',sev:'media',title:'Estados del ítem de la lista: Default, Hover, Active y Focus',img:'lista',
+ where:'student-links.css / catalog.css → .student-list a · :hover · [aria-current="true"] · :focus-visible',
+ why:'El componente "Lista / Alumno" de Figma tiene cuatro estados. En la web el indicador es un carácter "•" posicionado a mano, el activo no cambia de peso, el hover no se ve (la regla que fuerza #fff lo pisa) y el foco usa un anillo violeta separado del texto.',
+ changes:[
+  ['Default','14px · #ffffff · sin indicador','18px / 28px · 400 · #f5f4f5 · sin indicador','body/lg'],
+  ['Hover','sin cambio visible','indicador de 8px + nombre en 18px / 28px · 400 (el texto se corre 16px)',''],
+  ['Active (obra activa)','carácter "•" de 14px · peso 400','indicador de 8px + nombre en 18px / 28px · 590 (Semibold)',''],
+  ['Focus (teclado)','outline 2px #edc4ff · offset 5px','borde 2px #ffffff · radius 4px, pegado al ítem (sin offset)','border_white'],
+  ['Indicador','"•" con position: absolute','círculo de 8 × 8px #f5f4f5 en el flujo, con gap 8px antes del nombre',''],
+  ['Estructura del ítem','<a> con padding a mano','<a> con display: flex; align-items: center; gap: 8px; padding: 4px',''],
+ ],
+ note:'La descripción del componente en Figma todavía dice "Hover: texto violeta claro + indicador vacío", pero el diseño muestra un indicador lleno y el texto blanco. Esta card sigue el diseño; conviene actualizar la descripción.'},
+{id:'H-14',page:'Home',sev:'media',status:'nuevo',title:'Los nombres de la lista no están alineados con el título',img:'align',
+ where:'catalog.css / student-links.css → .student-list a (padding-left) · indicador ::before',
+ why:'En la web, el título "Obras por alumno" arranca en x = 29 y el texto de cada nombre en x = 41: quedan 12px corridos a la derecha porque el ítem reserva lugar para el "•" con padding-left: 12px aunque no esté activo. En Figma el texto de los nombres arranca en el mismo borde que el título; solo cuando el ítem está activo (o en hover) aparece el indicador en ese borde y el nombre se corre 16px.',
+ changes:[
+  ['Borde izquierdo del nombre (default)','12px a la derecha del título (x = 41 vs 29)','mismo x que el título',''],
+  ['padding-left del ítem','12px fijos para el "•"','sin padding extra: el indicador entra en el flujo solo en Hover y Active (ver H-07)',''],
+  ['Ítem activo / hover','"•" en x = 29 y nombre en x = 41','indicador de 8px en el borde del título, gap 8px, nombre corrido 16px',''],
+  ['Si el ítem usa padding 4px (componente)','—','compensar con margin-left: -4px en la lista para que el texto quede alineado al título',''],
+ ],
+ note:'El tamaño y el color del título y de los nombres también difieren de Figma, pero eso ya está en H-06 (título 18/28 #b8adb7, nombres 18/28 #f5f4f5).'},
+{id:'H-08',page:'Home',sev:'alta',title:'Falta un alumno en la lista: Bareiro Quevedo, Elias Gabriel',img:'missing',
+ where:'datos de alumnos/obras (el JSON o array que alimenta la lista)',
+ why:'En Figma (Home y Hand off) aparece "Bareiro Quevedo, Elias Gabriel" entre Aroza y Besnati. En la web no está: hay 32 nombres en vez de 33. "Joselevich" sí puede faltar: el handoff aclara que es un easter egg del mockup.',
+ changes:[['Lista de alumnos','32 (sin Bareiro Quevedo)','Agregar "Bareiro Quevedo, Elias Gabriel" con su obra','Hand off · 1 Lista de alumnos']],
+ note:'Confirmá con la cátedra si tiene obra cargada; si no tiene, es un pendiente de contenido, no de código.'},
+{id:'H-09',page:'Home',sev:'alta',title:'Carrusel de obras: proporción y opacidad de las imágenes',img:'carousel',
+ where:'catalog.css → .works · .work-card · .work-card img',
+ why:'En Figma las imágenes van apiladas sin espacio, centradas en una columna de 560 (x 440–1000), cada una con su proporción original (de 320 a 560 de ancho) y todas al 100%. En la web la imagen activa queda chica (≈ 257–306px), las vecinas al 42% de opacidad y hay espacio entre obras.',
+ changes:[
+  ['Ancho de columna','754px desde x=329','560px desde x=440',''],
+  ['Tamaño de imagen','≈ 257–306px (recortada)','proporción original, ancho entre 320 y 560px',''],
+  ['Opacidad de las no activas','0.42','1',''],
+  ['Separación entre imágenes','≈ 24px','0',''],
+ ]},
+{id:'H-10',page:'Home',sev:'alta',title:'Info de la obra activa (categoría, título, autor)',img:'meta',
+ where:'catalog.css → .work-meta · .work-category · .work-card h3 · .work-author',
+ why:'Es el texto más importante de la home y en la web quedó muy chico. En Figma el título es display/sm (32px Semibold) y el autor va con avatar.',
+ changes:[
+  ['Posición .work-meta','x = 945','x = 1000 (30px a la derecha de la columna)',''],
+  ['Categoría','11px / 14,3 · #bcb0c2','14px · #b8adb7','text_muted'],
+  ['Título','18px / 22,5 · 500','32px / 40px · 590','display/sm'],
+  ['Autor','11px / 16,5 · #bcb0c2','18px / 28px · #f5f4f5','body/lg · text_base'],
+  ['Avatar','no existe','24 × 24px circular, gap 8px con el nombre','componente Avatar'],
+  ['Gap categoría → título','10px','12px','spacing/12'],
+  ['Gap título → autor','6px','32px','spacing/32'],
+ ]},
+{id:'H-11',page:'Home',sev:'alta',title:'Falta el indicador de progreso a la derecha',img:'progress',
+ where:'nuevo componente en la columna derecha (catalog.css + JS de scroll)',
+ why:'En Figma hay una regla vertical de marcas a la derecha: una por obra, la activa es un punto. En la web no existe.',
+ changes:[
+  ['Indicador','no existe','41 marcas de 10 × 1px cada 24px, alineadas a x = 1360',''],
+  ['Marca activa','—','punto de 8 × 8px #f5f4f5, se mueve con el scroll',''],
+  ['Interacción','—','solo informativo, no clickeable','Hand off · 4'],
+ ]},
+{id:'H-12',page:'Home',sev:'media',title:'Botón Filtrar: posición y colores',img:'filter',
+ where:'catalog.css → #filter-trigger (.pill.filter-trigger)',
+ why:'En Figma el botón va abajo, centrado sobre la columna de imágenes. En la web está abajo a la derecha, blanco puro y con 46px de alto.',
+ changes:[
+  ['Posición','abajo a la derecha (x = 1294)','centrado sobre el carrusel (x ≈ 824–942), 48px desde abajo',''],
+  ['Fondo','#ffffff','#f6eff5','surface_inverted'],
+  ['Texto','#211921','#2c252c','text_inverted'],
+  ['Alto','46px','44px',''],
+ ]},
+// ---------- MODAL ----------
+{id:'M-02',page:'Modal de obra',sev:'alta',title:'Panel de información: título, descripción y datos',img:'m-panel',
+ where:'overlays.css → .detail-copy · .detail-copy h2 · .detail-description · .detail-data',
+ why:'El panel en Figma (componente "Detalle de obra") mide 318 de ancho desde x = 320, padding 16 y gap 32 entre bloques. En la web es más angosto y toda la tipografía es más chica.',
+ changes:[
+  ['Panel','x = 288 · 288px · padding 24px 20px','x = 320 · 318px · padding 16px · gap 32px','spacing/16 · spacing/32'],
+  ['Título','23,04px / 26,5 · 500','28px / 36px · 590','heading/h1'],
+  ['Descripción','15px / 22,5 · #bcb0c2','16px / 24px · #f5f4f5','body/md · text_base'],
+  ['Filas Alumno / Categoría','13px / 19,5','14px / 20px · gap 24px · padding 12px 0','body/sm'],
+  ['Línea de las filas','1px #544050','1px #605260','border_disabled'],
+ ]},
+{id:'M-03',page:'Modal de obra',sev:'media',status:'parcial',title:'Card "Descargar investigación"',img:'m-download',
+ where:'overlays.css → card de descarga',
+ why:'En Figma es una card con borde punteado, texto "Descargar investigación" e ícono de descarga. En la web dice "Investigación próximamente" con borde sólido.',
+ changes:[
+  ['Texto','"Descargar investigación ↗" en algunas obras; "Investigación próximamente" en otras','Descargar investigación (sin ↗; el ícono va a la derecha)','Hand off · 8'],
+  ['Borde','sólido','1px dashed #7f6c7e · radius 12px','border_base'],
+  ['Padding','—','16px · gap 16px','spacing/16'],
+  ['Tipografía','—','14px / 20px · 500',''],
+  ['Ícono','no tiene','descarga 20 × 20px a la derecha',''],
+ ],
+ note:'Si todavía no está el archivo, se puede dejar deshabilitado, pero con el diseño de Figma.'},
+{id:'M-04',page:'Modal de obra',sev:'alta',status:'parcial',title:'Carrusel del modal: flechas y paginación',img:'m-carousel',
+ where:'overlays.css → .media-panel · .media-stage · .media-counter (+ JS)',
+ why:'Según el handoff, el carrusel tiene flechas, paginación y teclado ←/→, con el video primero. En la web nueva ya existen los botones "Anterior", "Siguiente" y "Ver imagen n", pero en las obras con una sola imagen no se ven y sigue el contador "1/1" arriba a la izquierda. Revisar con una obra de varias imágenes que el estilo coincida.',
+ changes:[
+  ['Flechas','no hay','2 Icon button de 44 × 44px, fondo #4e2d4d, a los costados de la imagen','surface_active'],
+  ['Paginación','contador "1/1" de 12px','componente Paginación / Ítem debajo de la imagen','Hand off · 7'],
+  ['Teclado','—','← / → cambian de slide',''],
+  ['Fondo','#10080f liso','imagen de la obra desenfocada detrás',''],
+ ]},
+{id:'M-05',page:'Modal de obra',sev:'baja',title:'Posición del botón cerrar',img:'m-close',
+ where:'overlays.css → .dialog-close',
+ why:'En Figma el botón está a 16px del borde superior y derecho, con fondo blanco.',
+ changes:[
+  ['Posición','top 24px · right 24px','top 16px · right 16px','spacing/16'],
+  ['Fondo','#f5f0f5','#ffffff','text_white'],
+ ]},
+{id:'M-06',page:'Modal de obra',sev:'alta',title:'Descripción larga: recortar con degradé y "Leer más"',img:'m-largo',
+ where:'overlays.css → .detail-description (+ JS para expandir)',
+ why:'Con descripciones largas, como la de Bigot, Juan Martín (Pladi), la web muestra el texto entero: ocupa ≈ 630px y empuja los datos y la card de descarga fuera de la pantalla. En Figma (frame "Detalle de obra / Imagen / Detalle largo") el texto se corta a 304px de alto con un degradé hacia el fondo y aparece "Leer más" con un caret. Así los datos y la descarga quedan siempre a la vista.',
+ changes:[
+  ['Alto de la descripción','sin límite (≈ 630px en Pladi)','max-height: 304px; overflow: hidden (solo si el texto es más largo)',''],
+  ['Degradé de corte','no hay','::after sobre el texto: linear-gradient(to bottom, rgba(17, 9, 16, 0) 71%, #110910 92%)','surface_0'],
+  ['Botón "Leer más"','no existe','16px / 24px · 510 (Medium) · #f5f4f5 · caret-down 16px · gap 8px','body/md-medium'],
+  ['Al expandir','—','muestra el texto completo, saca el degradé, el texto pasa a "Leer menos" y el caret gira 180°',''],
+  ['Separación entre párrafos','≈ 22px','16px',''],
+  ['Accesibilidad','—','<button> con aria-expanded="true/false" y aria-controls apuntando a la descripción',''],
+ ],
+ note:'Si la descripción entra en 304px, no se muestran ni el degradé ni "Leer más". Para probarlo: abrí ?obra=umbral-bigot.'},
+{id:'M-07',page:'Modal de obra',sev:'alta',status:'nuevo',title:'La lista de alumnos queda abajo cuando se abre el modal',img:'m-listpos',
+ where:'overlays.css → .detail-students (dentro del dialog)',
+ why:'En la web nueva, al abrir una obra la lista "Obras por alumno" queda pegada abajo a la izquierda (y = 842), cortada, en lugar de arriba como columna fija. En la versión anterior estaba arriba. Según el handoff, la lista sigue visible y navegable con el modal abierto.',
+ changes:[
+  ['Posición de la lista','abajo (y = 842), cortada por el borde','arriba a la izquierda: x = 16 · y = 16, columna completa',''],
+  ['Comportamiento','—','sigue visible y navegable; click en otro nombre cambia la obra y la URL','Hand off · 5'],
+ ]},
+{id:'M-08',page:'Modal de obra',sev:'media',status:'nuevo',title:'Obras sin imagen muestran "Imagen pendiente"',img:null,
+ where:'datos de obras (imágenes) · ej. ?obra=umbral-bigot',
+ why:'En la web nueva algunas obras (por ejemplo Pladi, de Bigot) muestran un rectángulo gris con "Imagen pendiente". En la versión anterior tenían imagen. Si es contenido que falta cargar, es un pendiente de contenido; si se perdió en el deploy, hay que revisar las rutas de las imágenes.',
+ changes:[['Imagen de la obra','placeholder gris "Imagen pendiente"','imagen real de la obra (o el video como primer slide)','Hand off · Modelo de contenido']],
+ note:'El handoff dice que imágenes y video son obligatorios para todas las obras.'},
+{id:'M-09',page:'Modal de obra',sev:'media',status:'nuevo',title:'Cerrar el modal haciendo click en el fondo difuminado',img:'m-carousel',
+ where:'overlays.css / app.js → .media-panel · .detail-background (fondo difuminado del modal)',
+ why:'Hoy la única forma de salir del modal con el mouse es la X de arriba a la derecha. Estaría bueno que un click en cualquier parte del fondo difuminado (fuera de la imagen, las flechas y la paginación) también lo cierre. El handoff ya lo prevé: "X, tecla Esc, click fuera del modal (desktop)…". Las dos formas tienen que funcionar.',
+ changes:[
+  ['Click en el fondo difuminado','no hace nada','cierra el modal y limpia ?obra de la URL (igual que la X)','Hand off · Modal de obra'],
+  ['Zonas que NO cierran','—','la imagen o el video, las flechas, la paginación, el panel de info y la lista de alumnos',''],
+  ['Botón X','cierra','sigue cerrando (no cambia)',''],
+  ['Tecla Esc','—','también cierra',''],
+  ['Cursor sobre el fondo','flecha','cursor: pointer (o el componente Cursor con "Cerrar"), para que se entienda que es clickeable',''],
+ ],
+ note:'Implementación sugerida: escuchar el click en el contenedor del fondo y cerrar solo si event.target es el fondo mismo, no uno de sus hijos.'},
+// ---------- GALERÍA ----------
+{id:'GA-04',page:'Galería',sev:'alta',status:'nuevo',title:'Sin fotos, ocultar "Galería" del nav',img:'nav',
+ where:'base.css / app.js → nav desktop y tablet (.desktop-nav) + menú mobile (.menu-dialog) + ruta ?pagina=galeria',
+ why:'Mientras no haya fotos de la muestra, la galería no tiene contenido: hoy muestra "Próximamente, fotos de la muestra". Decisión de diseño: no mostrar una página vacía. El ítem "Galería" se saca del nav y del menú, y se vuelve a habilitar cuando se carguen fotos después de Artimañas.',
+ changes:[
+  ['Nav desktop y tablet','Inicio · Galería · Muestra 2026','Inicio · Muestra 2026 (sin "Galería") mientras no haya fotos',''],
+  ['Menú mobile','Inicio 01 · Galería 02 · Muestra 2026 03','Inicio 01 · Muestra 2026 02 (renumerar)',''],
+  ['Cómo se decide','—','si la lista de fotos de la galería está vacía, no renderizar el ítem; con al menos una foto, aparece solo',''],
+  ['URL directa ?pagina=galeria','muestra "Próximamente…"','redirigir a la Home mientras no haya fotos',''],
+  ['Distribución del nav desktop','3 ítems (izquierda · centro · derecha)','2 ítems: Inicio a la izquierda y Muestra 2026 a la derecha',''],
+ ],
+ note:'Así no hay que tocar el código de nuevo después de la muestra: cuando se suben las fotos, el ítem aparece. Si diseño prefiere otra distribución del nav con 2 ítems, actualizar esta card.'},
+{id:'GA-01',page:'Galería',sev:'alta',title:'Sobra el bloque de introducción',img:'g-intro',
+ where:'galería → .page-intro (h1 "Galería", bajada y nota)',
+ why:'En Figma la galería arranca directo con la grilla, 80px debajo del nav (y = 152). La web agrega un título "Galería" de 115px, una bajada y una nota que no están en el diseño, y empuja las fotos a y = 452.',
+ changes:[
+  ['.page-intro','h1 115,2px + bajada (en la web nueva: "Próximamente, fotos de la muestra")','eliminar; si no hay fotos todavía, mostrar el estado vacío que defina diseño',''],
+  ['Inicio de la grilla','y = 452','y = 152 (padding-top 80px)','spacing/80'],
+ ]},
+{id:'GA-02',page:'Galería',sev:'alta',title:'Grilla: 4 columnas y proporción original',img:'g-grid',
+ where:'catalog.css → .gallery-grid · .gallery-item img',
+ why:'El handoff pide 4 columnas en desktop y respetar la proporción original de cada foto. La web usa 3 columnas y recorta las fotos a alturas fijas (300 / 624px).',
+ changes:[
+  ['Columnas','3 × 445px','4 × 302px',''],
+  ['Gap horizontal','24px','24px (ok)','spacing/24'],
+  ['Gap vertical','24px','40px',''],
+  ['Margen lateral','x = 29','x = 80','spacing/80'],
+  ['Alto de cada foto','fijo (object-fit: cover)','auto, proporción original','Hand off · Galería'],
+ ]},
+{id:'GA-03',page:'Galería',sev:'alta',title:'Detalle de imagen: layout distinto',img:'g-detail',
+ where:'overlays.css → overlay de foto',
+ why:'En Figma el detalle es un overlay a pantalla completa sobre la galería desenfocada, con flechas a los costados y botón "Descargar". En la web es una caja con borde, con un epígrafe y sin flechas ni descarga.',
+ changes:[
+  ['Contenedor','caja de ≈ 1200 × 810 con fondo','overlay 100% sobre la galería desenfocada',''],
+  ['Imagen','dentro de la caja','centrada, máx. 693 × 520, con radius',''],
+  ['Flechas','no hay','Icon button 44px a los costados (se desactivan en la primera y la última)','Hand off · 3'],
+  ['Botón Descargar','no hay','Button 152 × 44, centrado, y = 762','Hand off · 4'],
+  ['Epígrafe "Imagen de referencia…"','visible','eliminar (sin texto ni crédito)','Hand off · Galería'],
+  ['Cerrar','dentro de la caja','arriba a la derecha del overlay',''],
+ ]},
+// ---------- MUESTRA ----------
+{id:'MU-01',page:'Muestra 2026',sev:'alta',title:'Dirección incorrecta en el ticket',img:'mu-address',
+ where:'ticket de Muestra 2026 → texto de dirección',
+ why:'En Figma la dirección quedó con número y esquina: "Diagonal 78 Nº 680 esquina 62". La web dice solo "Diagonal 78 esquina 62", así que le falta el número. Es un dato del evento: revisalo antes que cualquier detalle visual.',
+ changes:[['Dirección','Diagonal 78 esquina 62','Diagonal 78 Nº 680 esquina 62','Ticket · Muestra 2026 / Desktop'],
+  ['Link "Ver cómo llegar"','destino "Sede Fonseca, Diagonal 78 y Calle 62"','destino "Sede Fonseca, Diagonal 78 Nº 680, La Plata" (que coincida con el ticket)','']],
+ note:'Revisá también que el link de "Ver cómo llegar" apunte a la misma dirección.'},
+{id:'MU-02',page:'Muestra 2026',sev:'media',title:'Posición del ticket, el botón y el cerrar',img:'mu-layout',
+ where:'overlays.css → .ticket · a.pill · .dialog-close',
+ why:'En Figma el ticket está más abajo (y = 309) y "Ver cómo llegar" queda cerca del borde inferior (y = 776). En la web los dos están más arriba y el cerrar va pegado a la esquina.',
+ changes:[
+  ['Ticket (top)','y = 243','y = 309',''],
+  ['"Ver cómo llegar"','y = 628 · 161px de ancho','y = 776 · 169px de ancho',''],
+  ['Cerrar','top 24 · right 24','top 64 · right 64','Spacing/space-64'],
+ ]},
+{id:'MU-03',page:'Muestra 2026',sev:'baja',title:'Arte del ticket',img:'mu-art',
+ where:'.ticket-art',
+ why:'En Figma el arte del ticket es una mancha de degradé sin letra. En la web hay una "a" grande.',
+ changes:[['Arte','"a" con degradé','exportar el arte del ticket desde Figma (frame Ticket)','']]},
+// ---------- FOOTER ----------
+{id:'F-01',page:'Footer',sev:'alta',title:'Texto institucional del footer distinto al diseño',img:'f-text',
+ where:'footer → p, "Hecho con…"',
+ why:'Hay diferencias de copy con Figma.',
+ changes:[
+  ['Descripción','…presenta sus trabajos finales de carrera. Es una muestra para la Licenciatura en Diseño Multimedial.','Desde 2011 se realiza el festival “Artimañas” en donde el conjunto del alumnado de Taller de Diseño Multimedial presentan sus trabajos finales de carrera. Es una muestra de trabajos finales de Taller Multimedial V para la Licenciatura en Diseño Multimedial.',''],
+ ],
+ note:'"Hecho con … por alumnes" ya coincide con Figma: no tocar.'},
+{id:'F-02',page:'Footer',sev:'media',title:'Faltan las redes (Instagram, YouTube y Facebook) y sobra el link "Volver arriba"',img:'f-social',
+ where:'footer → columna derecha',
+ why:'En Figma la columna derecha tiene 3 íconos de redes arriba de la firma: Instagram, YouTube y Facebook (en una versión anterior Instagram aparecía repetido; ya está corregido). El link "Volver arriba" del footer se reemplaza por un botón flotante (F-07).',
+ changes:[
+  ['Íconos de redes','no hay','3 íconos de 32px en este orden: Instagram · YouTube · Facebook · gap 24px · alineados a la derecha','Footer / Red social'],
+  ['Estados','—','Default #b8adb7 (text_muted) · Hover #f5f4f5 (text_base) · Focus anillo de 2px',''],
+  ['Accesibilidad','—','área clickeable de 44 × 44px y nombre accesible (aria-label="Instagram de Artimañas", etc.)',''],
+  ['Link "Volver arriba ↑"','link de texto en el footer','quitar: lo reemplaza el botón flotante (ver F-07)',''],
+ ]},
+{id:'F-03',page:'Footer',sev:'media',title:'Márgenes y ancho del texto',img:'f-text',
+ where:'footer → contenedor',
+ why:'En Figma el contenido del footer va de x = 128 a x = 1312 y la descripción corta en ≈ 625px. En la web va de 80 a 1360 y la descripción es más ancha.',
+ changes:[
+  ['Margen lateral','80px','128px',''],
+  ['Ancho de la descripción','751px','≈ 625px',''],
+ ]},
+{id:'F-04',page:'Footer',sev:'alta',title:'Logos institucionales: faltan uno y cambian los dibujos',img:'f-logos',
+ where:'footer → fila de logos',
+ why:'Figma tiene 4 logos (UNLP, Facultad de Artes, 20 años Diseño Multimedial, T5 tpf). La web muestra 3 y con otros dibujos (Facultad de Artes con puntos, "Diseño Multimedial").',
+ changes:[
+  ['Cantidad','3','4, con space-between de x 128 a 1312',''],
+  ['Archivos','versiones distintas','exportar los 4 logos desde el footer de Figma (SVG)',''],
+ ]},
+{id:'F-05',page:'Footer',sev:'baja',title:'Composición del footer',img:'f-full',
+ where:'footer → .footer-orb · .footer-logo',
+ why:'El footer de Figma mide 1495 de alto y el logo está más abajo. El de la web mide 1150.',
+ changes:[
+  ['Alto','1150px','1495px',''],
+  ['Logo','864px de ancho · y = 390','≈ 856px de ancho · y ≈ 585',''],
+ ]},
+{id:'F-06',page:'Footer',sev:'media',title:'El corazón de "Hecho con…" es pixel art, no un emoji',img:'f-heart',
+ where:'footer → "Hecho con 💜 por…" (todos los tamaños)',
+ why:'En Figma el corazón es un pixel art de 7 × 7 en la paleta del sitio (violetas, azul y un brillo amarillo), de 20 × 20px. La web usa el emoji 💜, que además cambia según el sistema operativo. Abajo está el SVG exportado del frame de Figma: copialo y pegalo en lugar del emoji.',
+ changes:[
+  ['Corazón','emoji 💜 (cambia según el sistema)','SVG pixel art 20 × 20px (código abajo)','Footer · Group 1'],
+  ['Gap con el texto','espacio de texto','8px a cada lado',''],
+  ['Accesibilidad','—','aria-label="corazón" (o aria-hidden si el texto ya lo dice)',''],
+ ],
+ svg:SVG_HEART},
+{id:'F-07',page:'Footer',sev:'media',title:'"Volver arriba": botón flotante que reemplaza a Filtrar al llegar al footer',img:'volver',
+ where:'catalog.css / base.css → #filter-trigger (o un botón nuevo con el mismo estilo) + JS de scroll',
+ why:'En Figma (frame "Home / Desktop / Volver") "Volver arriba" es un botón pill fijo abajo y centrado, en el mismo lugar que "Filtrar". Aparece cuando llegás al footer: Filtrar se oculta y entra Volver arriba, y al subir vuelve Filtrar. En la web desktop hay solo un link de texto en el footer y Filtrar sigue visible abajo a la derecha.',
+ changes:[
+  ['Componente','link de texto "Volver arriba ↑" subrayado','Button pill 163 × 44, fijo abajo y centrado, 48px desde el borde inferior','Button · Primary'],
+  ['Fondo','—','#ffffff','surface_white'],
+  ['Texto','—','"Volver arriba" · 16px / 24px · 510 · #2c252c','body/md-medium · text_inverted'],
+  ['Ícono','carácter "↑" pegado al texto','ícono arrow-up de 24px a la derecha del texto, gap 8px','arrow-up'],
+  ['Padding · radius','—','0 16px · 999px','spacing/16'],
+  ['Cuándo aparece','—','cuando el footer entra en pantalla: Filtrar sale y Volver arriba entra con la misma transición (opacity + translate); al subir se invierte',''],
+  ['Acción','—','scroll suave al inicio (instantáneo con prefers-reduced-motion) y foco al inicio de la página',''],
+ ],
+ note:'En mobile la web ya hace el cambio Filtrar → "Ir arriba"; en desktop falta. Conviene que sea la misma lógica para todos los tamaños.'},
+{id:'E-01',page:'Error 404',sev:'media',title:'Página de error: fondo, título y botón',img:'e404',
+ where:'vista "Página no encontrada" (?obra= / ?foto= inexistentes) + 404 del servidor',
+ why:'En Figma el 404 tiene burbujas de vidrio repartidas por toda la pantalla, con el texto y el botón centrados dentro de la burbuja del medio. La web usa la esfera del footer con el texto abajo. Además, una ruta que no existe (por ejemplo /2026/temporal/no-existe) muestra la página 404 genérica de GitHub Pages.',
+ changes:[
+  ['Fondo','esfera del footer + halo violeta','burbujas "Glass" del frame Error 404 (exportar como imágenes)','Error 404 / Desktop'],
+  ['Posición del bloque','título y botón abajo (botón en y = 766)','centrado en la pantalla: título en y ≈ 404, botón en y ≈ 524 · gap 24px',''],
+  ['Título','≈ 32px','40px / 48px · 590 · #f5f4f5 · centrado · ancho 410px','display/md'],
+  ['Botón "Volver al Inicio"','152 × 44 · 16px / 20,8 · 400 · #10080f','44px de alto · padding 0 24px · 16px / 24px · 510 · #2c252c · fondo #f6eff5','body/md-medium · surface_inverted'],
+  ['Rutas inexistentes','página 404 genérica de GitHub Pages ("File not found")','subir un 404.html propio con este diseño en la raíz del sitio publicado (GitHub Pages lo usa solo)',''],
+ ]},
+// ---------- METADATA ----------
+{id:'MT-01',page:'Metadata',sev:'media',status:'parcial',title:'Favicon: falta completar los tamaños',img:'fav',
+ where:'<head> de todas las páginas + archivos en la raíz del sitio',
+ why:'Ya agregaron un favicon (assets/Favicon-64.png, 64 × 64). En la Librería UI (Assets › Favicon) están definidos 16, 32 y 512px: el de 64 sirve, pero el navegador lo achica en la pestaña y falta el de 512 para accesos directos.',
+ changes:[
+  ['Favicon 16 y 32','solo 64 × 64','PNG exportados de los frames 16x16 y 32x32 (ya configurados en Figma) con <link rel="icon">','Librería UI › Favicon'],
+  ['Ícono 512','no existe','PNG del frame 512x512: base para accesos directos y PWA (apple-touch-icon)',''],
+ ],
+ code:`<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="apple-touch-icon" href="/favicon-512x512.png">`, codeName:'<head> · favicon',
+ note:'Los tres frames ya tienen la exportación PNG 1× configurada: seleccionarlos en Figma y exportar.'},
+{id:'MT-02',page:'Metadata',sev:'media',title:'La imagen para compartir (OG) es otra versión',img:'og',
+ where:'assets/54d67b9979c8.jpg (og:image)',
+ why:'La OG Image de Figma tiene el logo con el óvalo "Muestra de arte interactivo" centrado dentro de la zona segura. La que usa la web es una versión anterior: no tiene el óvalo y el logo está en otra posición.',
+ changes:[
+  ['Imagen','JPG sin el óvalo "Muestra de arte interactivo"','PNG exportado del frame "OG Image" (1200 × 630)','Librería UI › OG Image'],
+  ['Zona segura','—','logo y texto centrados en el 80% del ancho; nada fuera del 90% central',''],
+  ['og:image:alt','Artimañas sobre un fondo violeta y naranja','Logo de Artimañas con la leyenda "Muestra de arte interactivo" sobre un fondo violeta y naranja',''],
+ ]},
+{id:'MT-03',page:'Metadata',sev:'alta',title:'Etiquetas para compartir incompletas',img:null,
+ where:'<head> de todas las páginas',
+ why:'Según la documentación de la OG Image, og:image tiene que ser una URL absoluta (https://…) y hay que sumar twitter:card. Hoy og:image es una ruta relativa, así que WhatsApp, Instagram, X y otras plataformas no muestran la imagen. Tampoco hay og:url, y theme-color usa el violeta viejo.',
+ changes:[
+  ['og:image','assets/54d67b9979c8.jpg (relativa)','https://DOMINIO/og-image.png (URL absoluta)','Librería UI › OG Image · Implementación'],
+  ['twitter:card','no existe','summary_large_image',''],
+  ['og:url','no existe','https://DOMINIO/ (URL canónica de la página)',''],
+  ['og:image:width / height / alt','1200 / 630 / ok','mantener (ya están bien)',''],
+  ['theme-color','#10080f','#110910','surface_0'],
+ ],
+ code:`<meta name="theme-color" content="#110910">
+<meta property="og:url" content="https://DOMINIO/">
+<meta property="og:image" content="https://DOMINIO/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Logo de Artimañas con la leyenda “Muestra de arte interactivo” sobre un fondo violeta y naranja">
+<meta name="twitter:card" content="summary_large_image">`, codeName:'<head> · compartir',
+ note:'Reemplazar DOMINIO por el dominio final cuando esté publicado. Para probarlo, pegar el link en opengraph.xyz o mandarlo por WhatsApp.'},
+];
+
+DATA.forEach(d=>d.vp='desktop');
+
+// ---------- TABLET (768) ----------
+const DATA_T = [
+{id:'T-01',page:'Home',sev:'alta',title:'Hero en tablet: logo muy chico y óvalo fuera de lugar',img:'tb-hero',
+ where:'hero-layout.css → @media tablet · logo apilado · .eyebrow · .marquee',
+ why:'En Figma el logo apilado ("arti / ma / ñas") ocupa casi todo el ancho: 435 × 465 desde x = 166. En la web mide ≈ 294 de ancho. El óvalo en Figma es el mismo Shape de desktop (310 × 77, arriba en y = 145); en la web es más chico y está más abajo.',
+ changes:[
+  ['Logo apilado','≈ 294px de ancho · y = 316','435 × 465px · x = 166 · y = 217',''],
+  ['Óvalo .eyebrow','215 × 47 · 13px / 19,5 · y = 261','Shape 310 × 77 · 18px / 28px · y = 145','body/lg'],
+  ['Alto del hero','922px','900px',''],
+  ['Marquee','12px / 18px · y = 849','18px / 28px · y = 760 (mismo Banner que desktop)','body/lg'],
+ ]},
+{id:'T-02',page:'Home',sev:'alta',title:'Cards de obra: masonry y tipografía',img:'tb-cards',
+ where:'catalog.css → @media tablet · .works · .work-card · h3 · .work-author',
+ why:'En Figma las obras van en 2 columnas tipo masonry: cada imagen con su proporción. En la web todas son cuadradas (340 × 340). El título y el autor tampoco coinciden.',
+ changes:[
+  ['Imagen','cuadrada 340 × 340 (recortada)','340px de ancho, alto según proporción original','Hand off · Mobile y tablet'],
+  ['Título','17px / 21,25 · 500','16px · 590 (Semibold) · #ffffff',''],
+  ['Autor','12px / 18 · #bcb0c2','12px · 400 · #ffffff',''],
+  ['Gap imagen → título','≈ 10px','8px',''],
+  ['Gap título → autor','≈ 6px','4px',''],
+  ['Separación vertical entre cards','≈ 24px','40px',''],
+ ]},
+{id:'T-03',page:'Home',sev:'media',title:'Botón Filtrar en tablet',img:'mb-filter',
+ where:'catalog.css → #filter-trigger',
+ why:'Mismo componente que en mobile: en Figma es más bajo, usa el color surface_inverted, lleva el ícono de sliders y muestra la cantidad de filtros activos.',
+ changes:[
+  ['Alto','46px','44px',''],
+  ['Fondo','#ffffff','#f6eff5','surface_inverted'],
+  ['Ícono','tres líneas','sliders horizontales (como en Figma)',''],
+  ['Texto con filtros activos','"Filtrar"','"Filtrar (2)": muestra la cantidad','Hand off · 11'],
+ ]},
+{id:'T-LG',page:'Modal de obra',sev:'alta',title:'Descripción larga en tablet: recortar con degradé y "Leer más"',img:'mb-largo',
+ where:'overlays.css → @media tablet · .detail-description (+ JS para expandir)',
+ why:'Con descripciones largas, la web muestra el texto entero y la tabla de datos y la descarga quedan muy abajo. En Figma (frame "Detalle de obra / Detalle largo") el texto se corta a ≈ 9 líneas con un degradé y aparece "Leer más", igual que en desktop pero con otro alto. Tablet usa el mismo diseño que mobile.',
+ changes:[
+  ['Alto de la descripción','sin límite','max-height: 216px (9 líneas de 24px); overflow: hidden','Figma mobile: 214'],
+  ['Degradé de corte','no hay','linear-gradient(to bottom, rgba(17, 9, 16, 0) 62%, #110910 88%)','surface_0'],
+  ['Botón "Leer más"','no existe','16px / 24px · 510 · #f5f4f5 · caret-down 16px · gap 8px','body/md-medium'],
+  ['Al expandir','—','texto completo, sin degradé, "Leer menos" y caret girado 180°',''],
+  ['Separación entre párrafos','≈ 22px','16px',''],
+  ['Gap descripción → datos','—','24px','spacing/24'],
+ ],
+ note:'Mismo componente que M-06 de desktop: solo cambia el max-height (304px en desktop, 216px en mobile y tablet).'},
+{id:'T-VA',page:'Footer',sev:'media',title:'Botón "Volver arriba": texto, ícono y estilo',img:'mb-volver',
+ where:'catalog.css → #filter-trigger cuando cambia a "Ir arriba" · link del footer',
+ why:'La web ya hace el cambio correcto: al llegar abajo, el botón Filtrar pasa a ser "Ir arriba". Lo que no coincide con Figma (frame "Home / Mobile / Volver") es el texto, el ícono y el estilo. Además sobra el link "Volver arriba ↑" del footer, porque el botón ya cumple esa función.',
+ changes:[
+  ['Texto','Ir arriba','Volver arriba',''],
+  ['Ícono','flecha a la izquierda','arrow-up de 24px a la derecha del texto, gap 8px','arrow-up'],
+  ['Tipografía','14px / 18,2 · 400 · #211921','16px / 24px · 510 · #2c252c','body/md-medium · text_inverted'],
+  ['Tamaño · padding','130 × 46 · 10px 24px','163 × 44 · 0 16px',''],
+  ['Distancia al borde inferior','28px','40px',''],
+  ['Link "Volver arriba ↑" del footer','visible','quitar',''],
+ ],
+ note:'Figma no tiene frame de tablet para este estado: usar el mismo botón y la misma lógica que en mobile. Las capturas son de mobile.'},
+{id:'T-404',page:'Error 404',sev:'media',title:'Página de error en tablet',img:'tb-404',
+ where:'vista "Página no encontrada" (@media tablet)',
+ why:'Igual que en desktop: Figma usa las burbujas de vidrio y centra el bloque. En la web la esfera ocupa media pantalla y el texto queda abajo.',
+ changes:[
+  ['Fondo','esfera + halo','burbujas "Glass" del frame Error 404 / Tablet',''],
+  ['Título','≈ 28px · abajo','40px / 48px · 590 · centrado · ancho 410px','display/md'],
+  ['Bloque','abajo (botón en y ≈ 788)','centrado (botón en y = 548) · gap 24px',''],
+  ['Botón','16px / 20,8 · 400 · #10080f','16px / 24px · 510 · #2c252c · fondo #f6eff5 · padding 0 24px','body/md-medium'],
+ ]},
+{id:'T-NG',page:'Home',sev:'alta',status:'nuevo',title:'Sin fotos, sacar "Galería" del nav',img:'nav',
+ where:'base.css / app.js → nav de tablet',
+ why:'Igual que en desktop (GA-04): mientras la galería no tenga fotos, el ítem no aparece en el nav. Se habilita solo cuando se carguen fotos después de Artimañas.',
+ changes:[
+  ['Ítems del nav','Inicio · Galería · Muestra 2026','Inicio · Muestra 2026',''],
+  ['Cuándo vuelve','—','automático, cuando la galería tenga al menos una foto',''],
+ ]},
+{id:'T-04',page:'Galería',sev:'alta',title:'Galería en tablet: sobra la intro y faltan proporciones',img:'tb-galeria',
+ where:'galería → .page-intro · .gallery-grid (@media tablet)',
+ why:'Igual que en desktop: Figma arranca directo con la grilla debajo del nav. Las 2 columnas de 340 con gap 24 están bien, pero las fotos tienen que respetar su proporción y el gap vertical es de 40.',
+ changes:[
+  ['.page-intro','h1 "Galería" + bajada + nota','eliminar',''],
+  ['Inicio de la grilla','y = 398','y = 136 (debajo del nav + 64px)','spacing/64'],
+  ['Gap vertical','24px','40px',''],
+  ['Alto de cada foto','fijo (recortada)','auto, proporción original',''],
+ ]},
+{id:'T-05',page:'Muestra 2026',sev:'alta',title:'Muestra en tablet: dirección y posiciones',img:'tb-muestra',
+ where:'ticket de Muestra 2026 (@media tablet)',
+ why:'Se repite el error de dirección. Además el botón y el cerrar no están donde los ubica Figma.',
+ changes:[
+  ['Dirección','Diagonal 78 esquina 62','Diagonal 78 Nº 680 esquina 62','igual que en desktop'],
+  ['"Ver cómo llegar"','y ≈ 692','y = 765',''],
+  ['Cerrar','top 24 · right 24','top 64 · right 32',''],
+  ['Ticket (top)','y ≈ 78','y = 108',''],
+ ]},
+];
+
+// ---------- MOBILE (390) ----------
+const DATA_M = [
+{id:'M-N1',page:'Home',sev:'media',title:'Nav mobile: tamaño de letra, márgenes y punto de más',img:'mb-nav',
+ where:'base.css → .mobile-brand · .menu-button',
+ why:'En Figma los ítems son body/md (16/24), con padding 16 en el nav y 8 en cada ítem (el texto arranca en x = 24). Solo "MENÚ" lleva punto. En la web son de 14px, arrancan en x = 16 y "ARTIMAÑAS" también tiene punto en la home.',
+ changes:[
+  ['Tipografía','14px / 21px','16px / 24px','body/md'],
+  ['Padding del nav','12px 0 · x = 16','16px el nav + 8px cada ítem (texto en x = 24)','spacing/16'],
+  ['Punto en "ARTIMAÑAS"','visible en la home','quitar (solo "MENÚ" lleva punto)',''],
+ ]},
+{id:'M-N2',page:'Home',sev:'media',title:'El nav desaparece al scrollear',img:null,
+ where:'base.css → header.site-header (position)',
+ why:'El handoff dice que el nav es "siempre Transparent, también al scrollear fuera del hero". En la web el header es estático: al bajar se va con el scroll y no hay forma de abrir el menú sin volver arriba. Pasa en todos los tamaños.',
+ changes:[['Posición del header','static (se va con el scroll)','fixed / sticky arriba, fondo transparente','Hand off · Navbar']],
+ note:'Confirmalo con diseño: si la intención es que se oculte al bajar y aparezca al subir, documentarlo en el handoff.'},
+{id:'M-H1',page:'Home',sev:'alta',title:'Hero mobile: logo, óvalo y marquee',img:'mb-hero',
+ where:'hero-layout.css → @media mobile',
+ why:'En Figma el bloque óvalo + logo apilado mide 325 × 433 y empieza en y = 223. En la web el logo es más angosto (≈ 238px) y el óvalo más chico. El hero mide 760 en vez de 900 y el marquee usa 12px.',
+ changes:[
+  ['Bloque logo + óvalo','logo ≈ 238px de ancho','325 × 433px · x = 33 · y = 223',''],
+  ['Óvalo .eyebrow','215 × 47 · 13px / 19,5','Shape 294 × 77 · 18px / 28px','body/lg'],
+  ['Alto del hero','760px','900px',''],
+  ['Marquee','12px / 18px · y = 691','18px / 28px · y = 755','body/lg'],
+ ]},
+{id:'M-H2',page:'Home',sev:'alta',title:'Cards de obra en mobile: masonry y tipografía',img:'mb-cards',
+ where:'catalog.css → @media mobile · .works · .work-card',
+ why:'Figma: 2 columnas de 167px con gap 24, imágenes con su proporción y 40px entre cards. Web: 2 columnas de 171 con gap 16, imágenes cuadradas.',
+ changes:[
+  ['Columnas','2 × 171px · gap 16px','2 × 167px · gap 24px','spacing/24'],
+  ['Imagen','cuadrada 171 × 171','alto según proporción original',''],
+  ['Título','15px / 18 · 500','16px · 590 (Semibold) · #ffffff',''],
+  ['Autor','11px / 16,5 · #bcb0c2','12px · 400 · #ffffff',''],
+  ['Gap imagen → título / título → autor','≈ 10px / 6px','8px / 4px',''],
+  ['Separación vertical entre cards','30px','40px',''],
+  ['Inicio de la grilla','50px debajo del hero','64px debajo del hero','spacing/64'],
+ ]},
+{id:'M-H3',page:'Home',sev:'media',title:'Botón Filtrar en mobile',img:'mb-filter',
+ where:'catalog.css → #filter-trigger',
+ why:'En Figma el botón usa surface_inverted, ícono de sliders, 44px de alto y muestra la cantidad de filtros activos ("Filtrar (2)").',
+ changes:[
+  ['Alto','46px','44px',''],
+  ['Fondo','#ffffff','#f6eff5','surface_inverted'],
+  ['Texto','#211921 · 14px / 18,2','#2c252c · 14px / 20px','text_inverted · body/sm'],
+  ['Ícono','tres líneas','sliders horizontales',''],
+  ['Con filtros activos','"Filtrar"','"Filtrar (n)"','Hand off · 11'],
+ ]},
+{id:'M-NG',page:'Menú',sev:'alta',status:'nuevo',title:'Sin fotos, sacar "Galería" del menú',img:'mb-menu',
+ where:'overlays.css / app.js → .menu-dialog',
+ why:'Igual que en desktop (GA-04): mientras la galería no tenga fotos, el ítem no aparece en el menú. Se habilita solo cuando se carguen fotos después de Artimañas.',
+ changes:[
+  ['Ítems del menú','Inicio 01 · Galería 02 · Muestra 2026 03','Inicio 01 · Muestra 2026 02',''],
+  ['Cuándo vuelve','—','automático, cuando la galería tenga al menos una foto',''],
+ ]},
+{id:'M-MN',page:'Menú',sev:'media',title:'Menú de pantalla completa',img:'mb-menu',
+ where:'overlays.css → .menu-dialog',
+ why:'En Figma los ítems son display/md (40/48 Semibold), arrancan en x = 16 y cada uno tiene 32px de padding vertical con línea abajo. El botón dice "CERRAR" en mayúsculas, sin ×.',
+ changes:[
+  ['Ítems','32px / 48 · 400 · x = 24','40px / 48px · 590 · x = 16','display/md'],
+  ['Padding de cada ítem','≈ 26px','32px arriba y abajo','spacing/32'],
+  ['Línea del ítem activo','#544050','1px blanco (Inicio) · el resto #7f6c7e','border_white / border_base'],
+  ['Números 01 / 02 / 03','—','14px / 20px · #b8adb7','body/sm · text_muted'],
+  ['Botón cerrar','"Cerrar ×" con borde de foco visible','"CERRAR" · 16px / 24px · sin ×','body/md'],
+  ['"ARTIMAÑAS" en el menú','#f5f0f5','#b8adb7 (apagado)','text_muted'],
+ ]},
+{id:'M-OB',page:'Modal de obra',sev:'alta',title:'Detalle de obra en mobile',img:'mb-obra',
+ where:'overlays.css → @media mobile · .media-panel · .media-stage · .media-counter · .detail-copy',
+ why:'En Figma la imagen va a sangre arriba (390 × 282, recortada con object-fit: cover), con el contador centrado sobre la imagen y los botones descargar y cerrar arriba a la derecha. En la web la imagen queda chica, con márgenes, y el contador "1/1" va arriba a la izquierda.',
+ changes:[
+  ['Imagen','358 × 269 contenida, con padding','390 × 282 a sangre · object-fit: cover',''],
+  ['Contador','"1/1" 12px arriba a la izquierda','pill centrada abajo de la imagen · 12px / 16 · 510 · fondo rgba(17, 9, 16, .7)','body/xs-medium'],
+  ['Cerrar','36 × 36 · top 14','44 × 44 · top 67 · right 16 · fondo #f6eff5','surface_inverted'],
+  ['Botón descargar','no existe','Icon button 44 × 44 · fondo #4e2d4d · a la izquierda del cerrar','surface_active'],
+  ['Título','28px / 32,2 · 500','28px / 36px · 590','heading/h1'],
+  ['Descripción','15px / 22,5 · #bcb0c2','16px / 24px · #f5f4f5','body/md'],
+  ['Filas Alumno / Categoría','13px / 19,5','14px / 20px · línea #7f6c7e','body/sm'],
+  ['Padding del contenido','16px 16px 30px','16px 16px 48px · gap 24px',''],
+ ]},
+{id:'M-LG',page:'Modal de obra',sev:'alta',title:'Descripción larga en mobile: recortar con degradé y "Leer más"',img:'mb-largo',
+ where:'overlays.css → @media mobile · .detail-description (+ JS para expandir)',
+ why:'Con descripciones largas, la web muestra el texto entero y la tabla de datos y la descarga quedan muy abajo. En Figma (frame "Detalle de obra / Detalle largo") el texto se corta a ≈ 9 líneas con un degradé y aparece "Leer más", igual que en desktop pero con otro alto.',
+ changes:[
+  ['Alto de la descripción','sin límite','max-height: 216px (9 líneas de 24px); overflow: hidden','Figma: 214'],
+  ['Degradé de corte','no hay','linear-gradient(to bottom, rgba(17, 9, 16, 0) 62%, #110910 88%)','surface_0'],
+  ['Botón "Leer más"','no existe','16px / 24px · 510 · #f5f4f5 · caret-down 16px · gap 8px','body/md-medium'],
+  ['Al expandir','—','texto completo, sin degradé, "Leer menos" y caret girado 180°',''],
+  ['Separación entre párrafos','≈ 22px','16px',''],
+  ['Gap descripción → datos','—','24px','spacing/24'],
+ ],
+ note:'Mismo componente que M-06 de desktop: solo cambia el max-height (304px en desktop, 216px en mobile y tablet).'},
+{id:'M-VA',page:'Footer',sev:'media',title:'Botón "Volver arriba": texto, ícono y estilo',img:'mb-volver',
+ where:'catalog.css → #filter-trigger cuando cambia a "Ir arriba" · link del footer',
+ why:'La web ya hace el cambio correcto: al llegar abajo, el botón Filtrar pasa a ser "Ir arriba". Lo que no coincide con Figma (frame "Home / Mobile / Volver") es el texto, el ícono y el estilo. Además sobra el link "Volver arriba ↑" del footer, porque el botón ya cumple esa función.',
+ changes:[
+  ['Texto','Ir arriba','Volver arriba',''],
+  ['Ícono','flecha a la izquierda','arrow-up de 24px a la derecha del texto, gap 8px','arrow-up'],
+  ['Tipografía','14px / 18,2 · 400 · #211921','16px / 24px · 510 · #2c252c','body/md-medium · text_inverted'],
+  ['Tamaño · padding','130 × 46 · 10px 24px','163 × 44 · 0 16px',''],
+  ['Distancia al borde inferior','28px','40px',''],
+  ['Link "Volver arriba ↑" del footer','visible','quitar',''],
+ ]},
+{id:'M-404',page:'Error 404',sev:'media',title:'Página de error en mobile',img:'mb-404',
+ where:'vista "Página no encontrada" (@media mobile)',
+ why:'Igual que en desktop: Figma usa las burbujas de vidrio y centra el bloque. En la web la esfera ocupa media pantalla y el texto queda abajo.',
+ changes:[
+  ['Fondo','esfera + halo','burbujas "Glass" del frame Error 404 / Mobile',''],
+  ['Título','≈ 28px · abajo','32px / 40px · 590 · centrado · padding lateral 16px','display/sm'],
+  ['Bloque','abajo (botón en y ≈ 710)','centrado (botón en y ≈ 550) · gap 24px',''],
+  ['Botón','16px / 20,8 · 400 · #10080f','16px / 24px · 510 · #2c252c · fondo #f6eff5 · padding 0 24px','body/md-medium'],
+ ]},
+{id:'M-GA',page:'Galería',sev:'alta',title:'Galería en mobile',img:'mb-galeria',
+ where:'galería → @media mobile',
+ why:'Igual que en desktop y tablet: sobra la introducción y las fotos están recortadas. Además las columnas y los gaps no coinciden.',
+ changes:[
+  ['.page-intro','visible (empuja la grilla a y = 330)','eliminar · la grilla arranca debajo del nav',''],
+  ['Columnas','2 × 171px · gap 16px','2 × 167px · gap 24px',''],
+  ['Gap vertical','16px','40px',''],
+  ['Alto de cada foto','fijo','proporción original',''],
+ ]},
+{id:'M-IM',page:'Galería',sev:'alta',title:'Detalle de imagen en mobile',img:'mb-imagen',
+ where:'overlays.css → overlay de foto (@media mobile)',
+ why:'En Figma el detalle se ve sobre la galería desenfocada, con el botón "Descargar" abajo. En la web el fondo es liso, hay un epígrafe y no hay botón de descarga.',
+ changes:[
+  ['Fondo','liso #10080f','galería desenfocada detrás',''],
+  ['Epígrafe "Imagen de referencia…"','visible','eliminar',''],
+  ['Botón Descargar','no existe','152 × 44 · centrado · y = 740','Hand off · 4'],
+  ['Cerrar','top 24 · x = 322','top 66 · right 16',''],
+  ['Navegación','—','swipe horizontal, sin flechas','Hand off · 3'],
+ ]},
+{id:'M-MU',page:'Muestra 2026',sev:'alta',title:'Muestra en mobile: dirección y posiciones',img:'mb-muestra',
+ where:'ticket de Muestra 2026 (@media mobile)',
+ why:'Mismo error de dirección que en desktop. El ticket, el botón y el cerrar están más arriba que en Figma.',
+ changes:[
+  ['Dirección','Diagonal 78 esquina 62','Diagonal 78 Nº 680 esquina 62','igual que en desktop'],
+  ['Ticket (top)','y = 88','y = 136',''],
+  ['"Ver cómo llegar"','y ≈ 683','y = 740',''],
+  ['Cerrar','top 20 · x = 328','top 66 · right 16',''],
+ ]},
+];
+DATA_T.forEach((d,i)=>{d.vp='tablet';d.id='TB-'+String(i+1).padStart(2,'0')});
+DATA_M.forEach((d,i)=>{d.vp='mobile';d.id='MB-'+String(i+1).padStart(2,'0')});
+DATA.push(...DATA_T, ...DATA_M);
+const VPS=[['desktop','Desktop · 1440'],['tablet','Tablet · 768'],['mobile','Mobile · 390']];
+let vp='desktop'; try{const h=location.hash.slice(1);if(VPS.some(v=>v[0]===h))vp=h;else{const s=localStorage.getItem('qa-artimanas-vp');if(s&&VPS.some(v=>v[0]===s))vp=s}}catch(e){}
+
+const KEY='qa-artimanas-v1';
+let done={}; try{done=JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(e){done={}}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(done))}catch(e){}};
+let filter='Todas', showDone=true;
+
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const swatch=v=>{const m=String(v).match(/#[0-9a-f]{6}\b/i);return m?`<span class="sw" style="background:${m[0]}"></span>`:''};
+const promptFor=d=>{
+  const lines=d.changes.map(([p,n,t,tok])=>`- ${p}: hoy "${n}" → debe ser "${t}"${tok?` (token Figma: ${tok})`:''}`).join('\n');
+  return `Visual QA de Artimañas 2026 (${d.page}) · ${d.id} — ${d.title}\nDónde: ${d.where}\nContexto: ${d.why}\nCambios exactos:\n${lines}${d.code?`\nCódigo a usar:\n${d.code}`:''}${d.svg?`\nSVG a usar (reemplaza al emoji, inline o como archivo corazon-pixel.svg):\n${d.svg}`:''}${d.note?`\nNota: ${d.note}`:''}\nRegla: todos los valores de diseño van en grilla de 8 (solo números pares). No cambies nada fuera de esto.`;
+};
+async function copy(text,btn,label){
+  try{await navigator.clipboard.writeText(text);btn.classList.add('ok');btn.textContent='Copiado';}
+  catch(e){const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();try{document.execCommand('copy')}catch(_){}ta.remove();btn.textContent='Seleccionado';}
+  setTimeout(()=>{btn.classList.remove('ok');btn.textContent=label},1400);
+}
+
+const cur=()=>DATA.filter(d=>d.vp===vp);
+function render(){
+  const list=document.getElementById('list');list.innerHTML='';
+  document.querySelectorAll('.vp-tab').forEach(t=>{const on=t.dataset.vp===vp;t.setAttribute('aria-selected',on);t.tabIndex=on?0:-1;
+    const all=DATA.filter(d=>d.vp===t.dataset.vp);t.querySelector('small').textContent=`${all.filter(d=>!done[d.id]).length} pendientes`;});
+  PAGES.forEach(pg=>{
+    const items=cur().filter(d=>d.page===pg);if(!items.length)return;
+    const sec=document.createElement('section');sec.className='page';sec.dataset.page=pg;
+    const left=items.filter(d=>!done[d.id]).length;
+    sec.innerHTML=`<h2>${esc(pg)} <small>${left} pendientes de ${items.length}</small></h2><div class="cards"></div>`;
+    const wrap=sec.querySelector('.cards');
+    items.forEach(d=>{
+      const c=document.createElement('article');c.className='card'+(done[d.id]?' done':'');c.id=d.id;
+      const im=d.img?IMG(d.img):null;
+      c.innerHTML=`
+      <div class="card-head">
+        <input type="checkbox" class="check" id="chk-${d.id}" aria-label="Marcar ${esc(d.id)} como resuelto" ${done[d.id]?'checked':''}>
+        <div class="title"><h3>${esc(d.title)}</h3><div class="sub"><span>${esc(d.id)}</span><span class="sev ${d.sev}">${d.sev}</span>${d.status?`<span class="st st-${d.status}">${d.status==="nuevo"?"Nuevo":"Parcial"}</span>`:""}</div></div>
+        <button class="expand" type="button" ${done[d.id]?'':'hidden'}>Ver</button>
+      </div>
+      <div class="card-body">
+        ${im?`<div class="compare${d.vp!=='desktop'?' tall':''}">
+          <figure class="shot f"><figcaption>Figma</figcaption><button type="button" data-lb="${d.img}" aria-label="Ampliar comparación"><img src="${im.f}" alt="Diseño en Figma: ${esc(d.title)}" loading="lazy"></button></figure>
+          <figure class="shot w"><figcaption>Código</figcaption><button type="button" data-lb="${d.img}" aria-label="Ampliar comparación"><img src="${im.w}" alt="Web actual: ${esc(d.title)}" loading="lazy"></button></figure>
+        </div>`:''}
+        <p class="why">${esc(d.why)}</p>
+        <div class="where">Dónde: <code>${esc(d.where)}</code></div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Qué</th><th>Hoy en código</th><th>Reemplazar por (Figma)</th></tr></thead>
+          <tbody>${d.changes.map(([p,n,t,tok])=>`<tr><td class="prop">${esc(p)}${tok?`<div class="where">${esc(tok)}</div>`:''}</td><td class="now"><span class="v">${swatch(n)}${esc(n)}</span></td><td><div class="to-cell"><span class="v">${swatch(t)}${esc(t)}</span><button class="copy" type="button" data-copy="${esc(t)}">Copiar</button></div></td></tr>`).join('')}</tbody>
+        </table></div>
+        ${d.svg?`<div class="asset"><div class="asset-preview" aria-hidden="true">${d.svg}</div><div class="asset-code"><div class="asset-head"><span>corazon-pixel.svg · 20 × 20</span><button class="copy" type="button" data-svg="1">Copiar SVG</button></div><pre><code>${esc(d.svg)}</code></pre></div></div>`:''}
+        ${d.code?`<div class="asset-code"><div class="asset-head"><span>${esc(d.codeName||'código')}</span><button class="copy" type="button" data-code="1">Copiar código</button></div><pre><code>${esc(d.code)}</code></pre></div>`:''}
+        ${d.note?`<p class="note">${esc(d.note)}</p>`:''}
+        <div class="actions"><button class="btn-prompt" type="button">Copiar prompt para la IA</button></div>
+      </div>`;
+      c.querySelector('.check').addEventListener('change',e=>toggle(d.id,e.target.checked));
+      c.querySelector('.expand').addEventListener('click',e=>{c.classList.toggle('open');e.target.textContent=c.classList.contains('open')?'Ocultar':'Ver'});
+      c.querySelector('.btn-prompt').addEventListener('click',e=>copy(promptFor(d),e.target,'Copiar prompt para la IA'));
+      c.querySelectorAll('.copy[data-code]').forEach(b=>b.addEventListener('click',()=>copy(d.code,b,'Copiar código')));
+      c.querySelectorAll('.copy:not([data-svg]):not([data-code])').forEach(b=>b.addEventListener('click',()=>copy(b.dataset.copy,b,'Copiar')));
+      c.querySelectorAll('.copy[data-svg]').forEach(b=>b.addEventListener('click',()=>copy(d.svg,b,'Copiar SVG')));
+      c.querySelectorAll('[data-lb]').forEach(b=>b.addEventListener('click',()=>openLb(d)));
+      wrap.appendChild(c);
+    });
+    list.appendChild(sec);
+  });
+  const ol=document.getElementById('final');ol.innerHTML='';
+  document.getElementById('final-vp').textContent=VPS.find(v=>v[0]===vp)[1];
+  cur().forEach(d=>{
+    const li=document.createElement('li');li.className=done[d.id]?'done':'';li.dataset.page=d.page;
+    li.innerHTML=`<input type="checkbox" class="check" id="fin-${d.id}" ${done[d.id]?'checked':''}><label for="fin-${d.id}"><span>${esc(d.id)}</span><a href="#${d.id}">${esc(d.title)}</a></label>`;
+    li.querySelector('input').addEventListener('change',e=>toggle(d.id,e.target.checked));
+    ol.appendChild(li);
+  });
+  applyFilter();updateProgress();
+}
+function toggle(id,val){if(val)done[id]=true;else delete done[id];save();const y=scrollY;render();scrollTo(0,y);}
+function updateProgress(){
+  const c=cur(),n=c.length,k=c.filter(d=>done[d.id]).length;
+  document.getElementById('bar').style.width=(n?k/n*100:0)+'%';
+  document.getElementById('count').textContent=`${k} / ${n} resueltos`;
+}
+function setVp(v,focus){vp=v;try{localStorage.setItem('qa-artimanas-vp',v)}catch(e){}
+  try{history.replaceState(null,'','#'+v)}catch(e){location.hash=v}
+  filter='Todas';buildFilters();render();if(focus)document.querySelector(`.vp-tab[data-vp="${v}"]`).focus();}
+function buildTabs(){
+  const t=document.getElementById('tabs');
+  VPS.forEach(([k,label])=>{const b=document.createElement('button');b.type='button';b.className='vp-tab';b.setAttribute('role','tab');b.dataset.vp=k;
+    b.innerHTML=`<span>${label}</span><small></small>`;b.addEventListener('click',()=>setVp(k));t.appendChild(b);});
+  t.addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight'].includes(e.key))return;const i=VPS.findIndex(v=>v[0]===vp);
+    const n=(i+(e.key==='ArrowRight'?1:-1)+VPS.length)%VPS.length;setVp(VPS[n][0],true);});
+}
+addEventListener('hashchange',()=>{const h=location.hash.slice(1);if(h!==vp&&VPS.some(v=>v[0]===h))setVp(h)});
+function applyFilter(){
+  document.querySelectorAll('section.page').forEach(s=>s.classList.toggle('hidden-by-filter',filter!=='Todas'&&s.dataset.page!==filter));
+  document.querySelectorAll('.card').forEach(c=>c.classList.toggle('hidden-by-filter',!showDone&&c.classList.contains('done')));
+}
+function buildFilters(){
+  const f=document.getElementById('filters');f.innerHTML='';
+  ['Todas',...PAGES.filter(p=>cur().some(d=>d.page===p))].forEach(p=>{const b=document.createElement('button');b.type='button';b.className='chip';b.textContent=p;b.setAttribute('aria-pressed',p===filter);
+    b.addEventListener('click',()=>{filter=p;f.querySelectorAll('.chip[data-f]').forEach(x=>x.setAttribute('aria-pressed',x.textContent===p));applyFilter()});b.dataset.f='1';f.appendChild(b)});
+  const t=document.createElement('button');t.type='button';t.className='chip toggle-done';t.textContent='Ocultar resueltas';t.setAttribute('aria-pressed',String(!showDone));
+  t.addEventListener('click',()=>{showDone=!showDone;t.setAttribute('aria-pressed',String(!showDone));applyFilter()});f.appendChild(t);
+}
+let lb=null;
+function openLb(d){
+  closeLb();const im=IMG(d.img);
+  lb=document.createElement('div');lb.className='lb';lb.setAttribute('role','dialog');lb.setAttribute('aria-label','Comparación ampliada');
+  lb.innerHTML=`<figure><figcaption>Figma</figcaption><img src="${im.f}" alt=""></figure><figure><figcaption>Código</figcaption><img src="${im.w}" alt=""></figure><button class="lb-close" type="button">Cerrar</button>`;
+  lb.addEventListener('click',e=>{if(e.target===lb||e.target.classList.contains('lb-close'))closeLb()});
+  document.body.appendChild(lb);lb.querySelector('.lb-close').focus();
+}
+function closeLb(){if(lb){lb.remove();lb=null}}
+addEventListener('keydown',e=>{if(e.key==='Escape')closeLb()});
+buildTabs();buildFilters();render();
+</script>
+
+</body>
+</html>
