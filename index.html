@@ -108,6 +108,10 @@ td.now .v{text-decoration:line-through;text-decoration-color:color-mix(in srgb,v
 .actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .btn-prompt{border:0;background:var(--fg);color:var(--bg);font:500 14px/20px var(--font);padding:10px 16px;border-radius:999px;cursor:pointer}
 .btn-prompt.ok{background:var(--done)}
+.btn-demo{border:1px solid var(--line);color:var(--fg);font:500 14px/20px var(--font);padding:10px 16px;border-radius:1000px;text-decoration:none}
+.btn-demo:hover{background:var(--surface-2)}
+.chip-new{border-color:var(--accent);color:var(--accent)}
+.chip-new[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--bg)}
 .note{font:400 14px/20px var(--font);color:var(--muted);border-left:2px solid var(--line);padding-left:12px;margin:0}
 /* estado tachado */
 .card.done .card-body{display:none}
@@ -126,6 +130,12 @@ td.now .v{text-decoration:line-through;text-decoration-color:color-mix(in srgb,v
 .final li a{color:inherit;text-decoration:none}
 .final li a:hover{text-decoration:underline}
 .hidden-by-filter{display:none!important}
+.frames{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
+.frame{margin:0;display:grid;gap:8px;min-width:0}
+.frame button{padding:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#000;cursor:zoom-in;display:block;width:100%}
+.frame img{display:block;width:100%;height:auto}
+.frame figcaption{font:500 12px/16px var(--mono);color:var(--muted)}
+.lb.lb-one{grid-template-columns:1fr}
 /* lightbox */
 .lb{position:fixed;inset:0;background:rgba(10,6,10,.92);z-index:20;display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:max(24px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 24px max(16px,env(safe-area-inset-left,0px));align-items:center}
 .lb figure{margin:0;display:grid;gap:8px;min-width:0;max-height:100%}
@@ -144,7 +154,6 @@ td.now .v{text-decoration:line-through;text-decoration-color:color-mix(in srgb,v
 </style>
 </head>
 <body>
-
 
 <div class="wrap">
   <header class="top">
@@ -298,6 +307,50 @@ const DATA = [
   ['Si el ítem usa padding 4px (componente)','—','compensar con margin-left: -4px en la lista para que el texto quede alineado al título',''],
  ],
  note:'El tamaño y el color del título y de los nombres también difieren de Figma, pero eso ya está en H-06 (título 18/28 #b8adb7, nombres 18/28 #f5f4f5).'},
+{id:'H-15',page:'Home',sev:'media',status:'nuevo',added:'17.11',title:'Hero: animación de carga y entrada de los elementos',img:null,
+ frames:[['hero-figma-carga.jpg','Figma · frame de carga (1410-9005)'],['hero-figma-hero.jpg','Figma · hero completo (1410-9062)'],['hero-proto-loading.jpg','1 · Cargando: logo al 42%, centrado'],['hero-proto-pulse.jpg','2 · Pulso: el logo baja a 92% y vuelve (1200ms)'],['hero-proto-mid.jpg','3 · Entrada (≈ 400ms): el logo crece, bajan el nav y la cinta'],['hero-proto-final.jpg','4 · Final: se dibuja el óvalo del label'],['hero-proto-hover.jpg','Hover en el nav: el punto pasa al ítem']],
+ where:'hero-layout.css → .hero · .logo-desktop · .eyebrow · .marquee · base.css → .desktop-nav · JS nuevo de carga',
+ why:'Al entrar a la página aparece primero solo "artimañas", chico y centrado, latiendo suave mientras carga. Cuando la página terminó de cargar, el logo crece a su tamaño y lugar, baja el nav, sube la cinta y se dibuja el óvalo de "Muestra de arte interactivo". Todo es suave y sin rebotes. En el nav, el punto blanco sigue al hover: se apaga en el ítem anterior y se enciende en el nuevo.',
+ changes:[
+  ['Fondo durante la carga','—','el degradé del hero visible desde el inicio (sin pantalla negra)',''],
+  ['Logo al entrar','—','blanco, al 42% de su tamaño (scale(.42)), centrado vertical en la pantalla; fundido de opacidad 400ms · cubic-bezier(.33,1,.68,1)',''],
+  ['Logo mientras carga','—','pulso: scale 1 → .92 → 1, ciclo de 1200ms, infinito · cubic-bezier(.37,0,.63,1)',''],
+  ['Cuándo termina la carga','—','cuando la página cargó y pasaron al menos 2 ciclos (2400ms), al cerrar el ciclo (escala 1, sin salto). Respaldo: 4000ms',''],
+  ['Logo crece a su lugar','—','scale(.42) → scale(1) y a su posición final · 800ms · cubic-bezier(.16,1,.3,1)',''],
+  ['Nav','—','entra desde arriba: translateY(-100%) → 0 · 640ms · cubic-bezier(.22,1,.36,1) · delay 120ms; opacidad 400ms',''],
+  ['Cinta del marquee','—','entra desde abajo: translateY(110%) → 0 · 640ms · misma curva · delay 120ms; el desplazamiento arranca recién ahí','Banner'],
+  ['Óvalo "Muestra de arte interactivo"','—','se dibuja el trazo: stroke-dashoffset 1 → 0 (pathLength="1") · 800ms · cubic-bezier(.65,0,.35,1) · delay 320ms; el texto aparece con fundido de 400ms · delay 720ms','Shape'],
+  ['Punto del nav en hover','punto fijo en el ítem activo','se apaga en el ítem anterior (scale 0 + opacidad 0 · 160ms · cubic-bezier(.4,0,1,1)) y se enciende en el ítem nuevo (240ms · cubic-bezier(.4,0,.2,1)); al salir del nav vuelve al activo',''],
+  ['Cinta en pantallas anchas','overflow: hidden (la cinta inclinada se corta arriba a la derecha)','overflow-x: clip; overflow-y: visible en el contenedor de la cinta','Banner'],
+  ['Reduced motion','—','sin pulso ni desplazamientos: solo fundidos (@media (prefers-reduced-motion: reduce))',''],
+ ],
+ code:`/* Estados: .hero.loading (mientras carga) → .hero.ready (cargado) */
+.hero .nav{transform:translateY(-100%);opacity:0}
+.hero .marquee{transform:translateY(110%);opacity:0}
+.hero .eyebrow{opacity:0}
+.hero .eyebrow span{opacity:0}
+.hero .eyebrow ellipse{stroke-dasharray:1;stroke-dashoffset:1}
+.logo{transform:translateY(var(--center-shift,0px)) scale(.42);opacity:0}
+.hero.intro .logo{opacity:1;transition:opacity 400ms cubic-bezier(.33,1,.68,1)}
+.hero.loading .logo img{animation:pulse 1200ms cubic-bezier(.37,0,.63,1) infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(.92)}}
+
+.hero.ready .logo{transform:none;transition:transform 800ms cubic-bezier(.16,1,.3,1)}
+.hero.ready .nav,.hero.ready .marquee{transform:none;opacity:1;
+  transition:transform 640ms cubic-bezier(.22,1,.36,1) 120ms,opacity 400ms cubic-bezier(.33,1,.68,1) 120ms}
+.hero.ready .eyebrow{opacity:1;transition:opacity 200ms linear 320ms}
+.hero.ready .eyebrow ellipse{stroke-dashoffset:0;transition:stroke-dashoffset 800ms cubic-bezier(.65,0,.35,1) 320ms}
+.hero.ready .eyebrow span{opacity:1;transition:opacity 400ms cubic-bezier(.33,1,.68,1) 720ms}
+
+/* JS: terminar al cerrar un ciclo del pulso, con la página cargada y al menos 2 ciclos */
+let pulses=0, loaded=false;
+const finish=()=>{hero.classList.remove('loading');hero.classList.add('ready')};
+logoImg.addEventListener('animationiteration',()=>{pulses++;if(loaded&&pulses>=2&&hero.classList.contains('loading'))finish()});
+addEventListener('load',()=>{loaded=true});
+setTimeout(()=>{if(hero.classList.contains('loading'))finish()},4000); // respaldo`,
+ codeName:'Secuencia de carga · CSS + JS (adaptar nombres de clases)',
+ demo:'artimanas-hero.html',
+ note:'Prototipo de referencia: artimanas-hero.html (abrir y usar "Repetir carga"). --center-shift es la distancia entre el centro del logo y el centro de la pantalla, calculada con JS antes de empezar. El botón "Repetir carga" es solo para revisar: no va en producción.'},
 {id:'H-08',page:'Home',sev:'alta',title:'Falta un alumno en la lista: Bareiro Quevedo, Elias Gabriel',img:'missing',
  where:'datos de alumnos/obras (el JSON o array que alimenta la lista)',
  why:'En Figma (Home y Hand off) aparece "Bareiro Quevedo, Elias Gabriel" entre Aroza y Besnati. En la web no está: hay 32 nombres en vez de 33. "Joselevich" sí puede faltar: el handoff aclara que es un easter egg del mockup.',
@@ -352,9 +405,9 @@ const DATA = [
   ['Filas Alumno / Categoría','13px / 19,5','14px / 20px · gap 24px · padding 12px 0','body/sm'],
   ['Línea de las filas','1px #544050','1px #605260','border_disabled'],
  ]},
-{id:'M-03',page:'Modal de obra',sev:'media',status:'parcial',title:'Card "Descargar investigación"',img:'m-download',
+{id:'M-03',added:'17.11',page:'Modal de obra',sev:'media',status:'parcial',title:'Card "Descargar investigación"',img:'m-download-off',
  where:'overlays.css → card de descarga',
- why:'En Figma es una card con borde punteado, texto "Descargar investigación" e ícono de descarga. En la web dice "Investigación próximamente" con borde sólido.',
+ why:'Referencia actualizada (17.11): como la página se publica antes de que estén las investigaciones, la versión a implementar ahora es la de la pill "Próximamente" (detalle en M-10). La web hoy muestra "Investigación próximamente" como texto suelto con borde sólido. Cuando se suba cada archivo, la card pasa al estado Default: borde punteado, texto "Descargar investigación" e ícono de descarga (filas de abajo).',
  changes:[
   ['Texto','"Descargar investigación ↗" en algunas obras; "Investigación próximamente" en otras','Descargar investigación (sin ↗; el ícono va a la derecha)','Hand off · 8'],
   ['Borde','sólido','1px dashed #7f6c7e · radius 12px','border_base'],
@@ -362,7 +415,7 @@ const DATA = [
   ['Tipografía','—','14px / 20px · 500',''],
   ['Ícono','no tiene','descarga 20 × 20px a la derecha',''],
  ],
- note:'Si todavía no está el archivo, se puede dejar deshabilitado, pero con el diseño de Figma.'},
+ note:'Si todavía no está el archivo, se usa el estado deshabilitado "Próximamente" de M-10.'},
 {id:'M-04',page:'Modal de obra',sev:'alta',status:'parcial',title:'Carrusel del modal: flechas y paginación',img:'m-carousel',
  where:'overlays.css → .media-panel · .media-stage · .media-counter (+ JS)',
  why:'Según el handoff, el carrusel tiene flechas, paginación y teclado ←/→, con el video primero. En la web nueva ya existen los botones "Anterior", "Siguiente" y "Ver imagen n", pero en las obras con una sola imagen no se ven y sigue el contador "1/1" arriba a la izquierda. Revisar con una obra de varias imágenes que el estilo coincida.',
@@ -379,11 +432,12 @@ const DATA = [
   ['Posición','top 24px · right 24px','top 16px · right 16px','spacing/16'],
   ['Fondo','#f5f0f5','#ffffff','text_white'],
  ]},
-{id:'M-06',page:'Modal de obra',sev:'alta',title:'Descripción larga: recortar con degradé y "Leer más"',img:'m-largo',
+{id:'M-06',added:'17.11',page:'Modal de obra',sev:'alta',title:'Descripción larga: recortar con degradé y "Leer más"',img:'m-largo',
  where:'overlays.css → .detail-description (+ JS para expandir)',
  why:'Con descripciones largas, como la de Bigot, Juan Martín (Pladi), la web muestra el texto entero: ocupa ≈ 630px y empuja los datos y la card de descarga fuera de la pantalla. En Figma (frame "Detalle de obra / Imagen / Detalle largo") el texto se corta a 304px de alto con un degradé hacia el fondo y aparece "Leer más" con un caret. Así los datos y la descarga quedan siempre a la vista.',
  changes:[
   ['Alto de la descripción','sin límite (≈ 630px en Pladi)','max-height: 304px; overflow: hidden (solo si el texto es más largo)',''],
+  ['Cuándo aparece "Leer más"','—','solo si el texto completo mide más de 304px de alto (más de 12 líneas de 24px en el ancho del panel, 286px de texto). Se mide con JS después de renderizar: si descripcion.scrollHeight > 304 se recorta y aparecen el degradé y "Leer más"; si no, el texto va entero y sin botón. No depende de la cantidad de caracteres. Recalcular al cambiar de obra o el ancho de la ventana',''],
   ['Degradé de corte','no hay','::after sobre el texto: linear-gradient(to bottom, rgba(17, 9, 16, 0) 71%, #110910 92%)','surface_0'],
   ['Botón "Leer más"','no existe','16px / 24px · 510 (Medium) · #f5f4f5 · caret-down 16px · gap 8px','body/md-medium'],
   ['Al expandir','—','muestra el texto completo, saca el degradé, el texto pasa a "Leer menos" y el caret gira 180°',''],
@@ -414,6 +468,33 @@ const DATA = [
   ['Cursor sobre el fondo','flecha','cursor: pointer (o el componente Cursor con "Cerrar"), para que se entienda que es clickeable',''],
  ],
  note:'Implementación sugerida: escuchar el click en el contenedor del fondo y cerrar solo si event.target es el fondo mismo, no uno de sus hijos.'},
+{id:'M-10',page:'Modal de obra',sev:'alta',status:'nuevo',added:'17.11',title:'"Descargar investigación" deshabilitado: estado "Próximamente"',img:'m-download-off',
+ where:'overlays.css → card de descarga (Action card) · estado disabled cuando la obra no tiene archivo de investigación',
+ why:'La página se publica antes de que estén listas las investigaciones. Para esas obras, Figma tiene un estado Disabled de la Action card (frame "Detalle de obra / Descarga no disponible"): borde punteado más apagado, texto gris y una pill "Próximamente" en lugar del ícono de descarga. No es clickeable.',
+ changes:[
+  ['Cuándo se usa','"Investigación próximamente" como texto suelto en algunas obras','si la obra no tiene archivo de investigación: Action card en estado Disabled',''],
+  ['Borde','—','1px dashed #605260 · radius 12px','border_disabled · corner-12'],
+  ['Padding · gap','—','16px · gap 16px','spacing/16'],
+  ['Texto','—','"Descargar investigación" · 14px / 20px · 510 · #7f6c7e','body/sm-medium · text_disabled'],
+  ['Pill "Próximamente"','—','12px / 16px · 510 · #7f6c7e · fondo #211320 · padding 2px 8px · radius 999px · gap 8px con el texto','body/xs-medium · surface_disabled'],
+  ['Ícono de descarga','—','no se muestra en el estado Disabled',''],
+  ['Interacción','—','no es link ni botón activo: aria-disabled="true", sin hover ni cursor pointer',''],
+  ['Botón descargar de arriba (Icon button)','—','revisar con diseño si también se deshabilita cuando no hay investigación',''],
+ ],
+ note:'Figma: Detalle de obra / Descarga no disponible (nodo 1496-16571). Cuando se suba el archivo, la card vuelve al estado Default de M-03 sin tocar el diseño.'},
+{id:'M-11',page:'Modal de obra',sev:'media',status:'nuevo',added:'17.11',title:'Nueva fila "Indicaciones" con íconos en el detalle de la obra',img:'m-indicaciones',
+ where:'overlays.css → .detail-data (tabla Alumno / Categoría) + íconos SVG nuevos',
+ why:'En el detalle de la obra se sumó una fila "Indicaciones" debajo de Alumno y Categoría. Lista cómo vivir la obra con un ícono y un texto corto por indicación, alineados a la derecha. En la web no existe.',
+ changes:[
+  ['Fila "Indicaciones"','no existe','label "Indicaciones" a la izquierda y la lista de pills a la derecha · padding 16px 0 · gap 8px · línea inferior 1px #605260','border_disabled'],
+  ['Label','—','14px / 20px · 400 · #b8adb7','body/sm · text_muted'],
+  ['Lista de pills','—','columna alineada a la derecha · gap 8px entre pills','spacing/8'],
+  ['Cada pill','—','ícono 14 × 14px + texto 14px / 20px · 400 · #f5f4f5 · gap 6px','body/sm · text_base'],
+  ['Íconos','—','exportar de Figma como SVG: "Interacción individual", "Sonido", "No flash"',''],
+  ['Textos','—','"1 persona" · "Tiene sonido" · "No usar flash" (solo las que apliquen a cada obra)',''],
+  ['Si la obra no tiene indicaciones','—','no mostrar la fila',''],
+ ],
+ note:'Figma: Detalle de obra / Descarga no disponible (nodo 1496-16571), fila "Indicaciones". En este frame la fila Categoría muestra solo el texto ("IA"), sin ícono.'},
 // ---------- GALERÍA ----------
 {id:'GA-04',page:'Galería',sev:'alta',status:'nuevo',title:'Sin fotos, ocultar "Galería" del nav',img:'nav',
  where:'base.css / app.js → nav desktop y tablet (.desktop-nav) + menú mobile (.menu-dialog) + ruta ?pagina=galeria',
@@ -481,7 +562,7 @@ const DATA = [
   ['Descripción','…presenta sus trabajos finales de carrera. Es una muestra para la Licenciatura en Diseño Multimedial.','Desde 2011 se realiza el festival “Artimañas” en donde el conjunto del alumnado de Taller de Diseño Multimedial presentan sus trabajos finales de carrera. Es una muestra de trabajos finales de Taller Multimedial V para la Licenciatura en Diseño Multimedial.',''],
  ],
  note:'"Hecho con … por alumnes" ya coincide con Figma: no tocar.'},
-{id:'F-02',page:'Footer',sev:'media',title:'Faltan las redes (Instagram, YouTube y Facebook) y sobra el link "Volver arriba"',img:'f-social',
+{id:'F-02',added:'17.11',page:'Footer',sev:'media',title:'Faltan las redes (Instagram, YouTube y Facebook) y sobra el link "Volver arriba"',img:'f-social',
  where:'footer → columna derecha',
  why:'En Figma la columna derecha tiene 3 íconos de redes arriba de la firma: Instagram, YouTube y Facebook (en una versión anterior Instagram aparecía repetido; ya está corregido). El link "Volver arriba" del footer se reemplaza por un botón flotante (F-07).',
  changes:[
@@ -495,22 +576,32 @@ const DATA = [
  why:'En Figma el contenido del footer va de x = 128 a x = 1312 y la descripción corta en ≈ 625px. En la web va de 80 a 1360 y la descripción es más ancha.',
  changes:[
   ['Margen lateral','80px','128px',''],
-  ['Ancho de la descripción','751px','≈ 625px',''],
+  ['Ancho de la descripción','751px','628px (columna izquierda del footer)',''],
  ]},
-{id:'F-04',page:'Footer',sev:'alta',title:'Logos institucionales: faltan uno y cambian los dibujos',img:'f-logos',
+{id:'F-04',added:'17.11',page:'Footer',sev:'alta',title:'Logos institucionales: faltan uno y cambian los dibujos',img:'f-logos',
  where:'footer → fila de logos',
  why:'Figma tiene 4 logos (UNLP, Facultad de Artes, 20 años Diseño Multimedial, T5 tpf). La web muestra 3 y con otros dibujos (Facultad de Artes con puntos, "Diseño Multimedial").',
  changes:[
   ['Cantidad','3','4, con space-between de x 128 a 1312',''],
   ['Archivos','versiones distintas','exportar los 4 logos desde el footer de Figma (SVG)',''],
  ]},
-{id:'F-05',page:'Footer',sev:'baja',title:'Composición del footer',img:'f-full',
- where:'footer → .footer-orb · .footer-logo',
- why:'El footer de Figma mide 1495 de alto y el logo está más abajo. El de la web mide 1150.',
+{id:'F-05',page:'Footer',sev:'media',status:'nuevo',added:'17.11',title:'Footer actualizado: sin orbe, fondo degradé y vidrios',img:'f-footer26',
+ where:'footer → .footer-orb (eliminar) · fondo del footer · .footer-logo · óvalo "2026" · capa decorativa nueva',
+ why:'El footer se rediseñó (Figma: componente Footer, Viewport=Desktop, nodo 704-11248). Se sacó la orbe de luz que estaba arriba del logo. Ahora el fondo es un degradé que sube desde violeta oscuro, con burbujas de vidrio a los costados y destellos repartidos, y el footer es más bajo. El logo y el óvalo "2026" quedan centrados arriba, y el texto, las redes y los logos abajo.',
  changes:[
-  ['Alto','1150px','1495px',''],
-  ['Logo','864px de ancho · y = 390','≈ 856px de ancho · y ≈ 585',''],
- ]},
+  ['Orbe de luz (.footer-orb)','visible arriba del logo','eliminar',''],
+  ['Fondo','liso oscuro','linear-gradient(to top, #311c30 0%, #110910 73%)','surface_2 → surface_0'],
+  ['Burbujas de vidrio','no hay','3 imágenes "Glass" (izquierda, arriba al centro y derecha), exportadas de Figma como PNG, position: absolute, aria-hidden',''],
+  ['Destellos','1 destello chico','9 destellos (recurso06_01) de 60 × 60px, algunos rotados, repartidos alrededor del logo y del texto',''],
+  ['Brillo central','—','elipse difusa detrás del logo (Ellipse 39), exportada de Figma',''],
+  ['Alto del footer','1150px','1118px','Footer · Desktop'],
+  ['Logo "artimañas"','864px de ancho · y = 390','901 × 190px · centrado · top 220px',''],
+  ['Óvalo "2026"','debajo del logo, sin rotación','Shape 272 × 76 · rotado 2,48° · top 410px · padding 0 112px · texto 18px / 28px blanco','Shape · body/lg'],
+  ['Bloque inferior','—','padding 80px 128px · gap 64px entre la fila de texto, la línea y los logos','spacing/80 · spacing/128 · spacing/64'],
+  ['Título del bloque','más chico','"Muestra de trabajos finales de Taller de Diseño Multimedial V" · 18px / 26px · 590 · #f5f4f5','heading/h4 · text_base'],
+  ['Columna derecha','"Volver arriba ↑" + "Hecho con…" + "© 2026"','redes (32px, gap 24px) · "Hecho con … por alumnes" · "© 2026 Artimañas" · 18px / 28px · #b8adb7 · gap 16px · alineada a la derecha','body/lg · text_muted'],
+ ],
+ note:'Los textos, las redes, los logos y el corazón tienen sus propias cards (F-01, F-02, F-04, F-06). Esta card cubre la composición y el fondo. Los vidrios y destellos son decorativos: no tienen que tapar texto ni recibir clicks (pointer-events: none).'},
 {id:'F-06',page:'Footer',sev:'media',title:'El corazón de "Hecho con…" es pixel art, no un emoji',img:'f-heart',
  where:'footer → "Hecho con 💜 por…" (todos los tamaños)',
  why:'En Figma el corazón es un pixel art de 7 × 7 en la paleta del sitio (violetas, azul y un brillo amarillo), de 20 × 20px. La web usa el emoji 💜, que además cambia según el sistema operativo. Abajo está el SVG exportado del frame de Figma: copialo y pegalo en lugar del emoji.',
@@ -520,7 +611,7 @@ const DATA = [
   ['Accesibilidad','—','aria-label="corazón" (o aria-hidden si el texto ya lo dice)',''],
  ],
  svg:SVG_HEART},
-{id:'F-07',page:'Footer',sev:'media',title:'"Volver arriba": botón flotante que reemplaza a Filtrar al llegar al footer',img:'volver',
+{id:'F-07',added:'17.11',page:'Footer',sev:'media',title:'"Volver arriba": botón flotante que reemplaza a Filtrar al llegar al footer',img:'volver',
  where:'catalog.css / base.css → #filter-trigger (o un botón nuevo con el mismo estilo) + JS de scroll',
  why:'En Figma (frame "Home / Desktop / Volver") "Volver arriba" es un botón pill fijo abajo y centrado, en el mismo lugar que "Filtrar". Aparece cuando llegás al footer: Filtrar se oculta y entra Volver arriba, y al subir vuelve Filtrar. En la web desktop hay solo un link de texto en el footer y Filtrar sigue visible abajo a la derecha.',
  changes:[
@@ -533,7 +624,7 @@ const DATA = [
   ['Acción','—','scroll suave al inicio (instantáneo con prefers-reduced-motion) y foco al inicio de la página',''],
  ],
  note:'En mobile la web ya hace el cambio Filtrar → "Ir arriba"; en desktop falta. Conviene que sea la misma lógica para todos los tamaños.'},
-{id:'E-01',page:'Error 404',sev:'media',title:'Página de error: fondo, título y botón',img:'e404',
+{id:'E-01',added:'17.11',page:'Error 404',sev:'media',title:'Página de error: fondo, título y botón',img:'e404',
  where:'vista "Página no encontrada" (?obra= / ?foto= inexistentes) + 404 del servidor',
  why:'En Figma el 404 tiene burbujas de vidrio repartidas por toda la pantalla, con el texto y el botón centrados dentro de la burbuja del medio. La web usa la esfera del footer con el texto abajo. Además, una ruta que no existe (por ejemplo /2026/temporal/no-existe) muestra la página 404 genérica de GitHub Pages.',
  changes:[
@@ -616,11 +707,12 @@ const DATA_T = [
   ['Ícono','tres líneas','sliders horizontales (como en Figma)',''],
   ['Texto con filtros activos','"Filtrar"','"Filtrar (2)": muestra la cantidad','Hand off · 11'],
  ]},
-{id:'T-LG',page:'Modal de obra',sev:'alta',title:'Descripción larga en tablet: recortar con degradé y "Leer más"',img:'mb-largo',
+{id:'T-LG',added:'17.11',page:'Modal de obra',sev:'alta',title:'Descripción larga en tablet: recortar con degradé y "Leer más"',img:'mb-largo',
  where:'overlays.css → @media tablet · .detail-description (+ JS para expandir)',
  why:'Con descripciones largas, la web muestra el texto entero y la tabla de datos y la descarga quedan muy abajo. En Figma (frame "Detalle de obra / Detalle largo") el texto se corta a ≈ 9 líneas con un degradé y aparece "Leer más", igual que en desktop pero con otro alto. Tablet usa el mismo diseño que mobile.',
  changes:[
   ['Alto de la descripción','sin límite','max-height: 216px (9 líneas de 24px); overflow: hidden','Figma mobile: 214'],
+  ['Cuándo aparece "Leer más"','—','solo si el texto completo mide más de 216px de alto (más de 9 líneas de 24px). Se mide con JS después de renderizar: si descripcion.scrollHeight > 216 se recorta y aparecen el degradé y "Leer más"; si no, el texto va entero y sin botón. No depende de la cantidad de caracteres. Recalcular al cambiar de obra, al rotar el dispositivo o al cambiar el ancho de la ventana',''],
   ['Degradé de corte','no hay','linear-gradient(to bottom, rgba(17, 9, 16, 0) 62%, #110910 88%)','surface_0'],
   ['Botón "Leer más"','no existe','16px / 24px · 510 · #f5f4f5 · caret-down 16px · gap 8px','body/md-medium'],
   ['Al expandir','—','texto completo, sin degradé, "Leer menos" y caret girado 180°',''],
@@ -628,7 +720,7 @@ const DATA_T = [
   ['Gap descripción → datos','—','24px','spacing/24'],
  ],
  note:'Mismo componente que M-06 de desktop: solo cambia el max-height (304px en desktop, 216px en mobile y tablet).'},
-{id:'T-VA',page:'Footer',sev:'media',title:'Botón "Volver arriba": texto, ícono y estilo',img:'mb-volver',
+{id:'T-VA',added:'17.11',page:'Footer',sev:'media',title:'Botón "Volver arriba": texto, ícono y estilo',img:'mb-volver',
  where:'catalog.css → #filter-trigger cuando cambia a "Ir arriba" · link del footer',
  why:'La web ya hace el cambio correcto: al llegar abajo, el botón Filtrar pasa a ser "Ir arriba". Lo que no coincide con Figma (frame "Home / Mobile / Volver") es el texto, el ícono y el estilo. Además sobra el link "Volver arriba ↑" del footer, porque el botón ya cumple esa función.',
  changes:[
@@ -640,7 +732,7 @@ const DATA_T = [
   ['Link "Volver arriba ↑" del footer','visible','quitar',''],
  ],
  note:'Figma no tiene frame de tablet para este estado: usar el mismo botón y la misma lógica que en mobile. Las capturas son de mobile.'},
-{id:'T-404',page:'Error 404',sev:'media',title:'Página de error en tablet',img:'tb-404',
+{id:'T-404',added:'17.11',page:'Error 404',sev:'media',title:'Página de error en tablet',img:'tb-404',
  where:'vista "Página no encontrada" (@media tablet)',
  why:'Igual que en desktop: Figma usa las burbujas de vidrio y centra el bloque. En la web la esfera ocupa media pantalla y el texto queda abajo.',
  changes:[
@@ -674,6 +766,22 @@ const DATA_T = [
   ['Cerrar','top 24 · right 24','top 64 · right 32',''],
   ['Ticket (top)','y ≈ 78','y = 108',''],
  ]},
+{id:'T-FT',page:'Footer',sev:'media',status:'nuevo',added:'17.11',title:'Footer en tablet: sin orbe, fondo degradé y vidrios',img:'tb-footer26',
+ where:'footer (@media tablet) → .footer-orb (eliminar) · fondo · .footer-logo · óvalo "2026" · bloque inferior · logos',
+ why:'Mismo rediseño que desktop (F-05), adaptado a 768 (Figma: Footer, Viewport=Tablet, nodo 997-63392). Se saca la orbe, el fondo pasa a ser el degradé violeta con vidrios y destellos, y el texto, las redes y los 4 logos quedan abajo. Medidas redondeadas a valores pares; los logos van con alto automático.',
+ changes:[
+  ['Orbe de luz','visible arriba del logo','eliminar',''],
+  ['Fondo','liso oscuro','linear-gradient(to top, #311c30 0%, #110910 73%)','surface_2 → surface_0'],
+  ['Decoración','2 destellos','3 vidrios (escala 750px) a los costados + 9 destellos de 50px, aria-hidden, pointer-events: none',''],
+  ['Alto del footer','≈ 1072px','1054px','Footer · Tablet'],
+  ['Logo "artimañas"','≈ 560px de ancho','632px de ancho · centrado · top 196px',''],
+  ['Óvalo "2026"','debajo del logo, sin rotación','Shape 272 × 76 · rotado 2,48° · 8px debajo del logo · texto 18px / 28px','Shape · body/lg'],
+  ['Bloque inferior','—','padding 80px 32px · gap 64px entre texto, línea y logos','spacing/80 · spacing/32 · spacing/64'],
+  ['Fila de texto','texto 14px aprox.','columna de texto flexible + columna derecha · gap 48px · título 18px / 26px · 590 · descripción 18px / 28px · #b8adb7','heading/h4 · body/lg'],
+  ['Columna derecha','"Volver arriba ↑" + "Hecho con…" + "© 2026"','redes (32px, gap 24px) · "Hecho con … por alumnes" · "© 2026 Artimañas" · gap 16px · alineada a la derecha · sin "Volver arriba"','body/lg · text_muted'],
+  ['Logos','3 (Facultad de Artes y Diseño Multimedial con otros dibujos)','4 en fila, space-between: UNLP 136px · Facultad de Artes 172px · 20 años Diseño Multimedial 114px · T5 tpf 64px de ancho (ver F-04)',''],
+ ],
+ note:'El botón flotante "Ir arriba" que aparece en la captura es otro componente (ver TB "Volver arriba").'},
 ];
 
 // ---------- MOBILE (390) ----------
@@ -753,11 +861,12 @@ const DATA_M = [
   ['Filas Alumno / Categoría','13px / 19,5','14px / 20px · línea #7f6c7e','body/sm'],
   ['Padding del contenido','16px 16px 30px','16px 16px 48px · gap 24px',''],
  ]},
-{id:'M-LG',page:'Modal de obra',sev:'alta',title:'Descripción larga en mobile: recortar con degradé y "Leer más"',img:'mb-largo',
+{id:'M-LG',added:'17.11',page:'Modal de obra',sev:'alta',title:'Descripción larga en mobile: recortar con degradé y "Leer más"',img:'mb-largo',
  where:'overlays.css → @media mobile · .detail-description (+ JS para expandir)',
  why:'Con descripciones largas, la web muestra el texto entero y la tabla de datos y la descarga quedan muy abajo. En Figma (frame "Detalle de obra / Detalle largo") el texto se corta a ≈ 9 líneas con un degradé y aparece "Leer más", igual que en desktop pero con otro alto.',
  changes:[
   ['Alto de la descripción','sin límite','max-height: 216px (9 líneas de 24px); overflow: hidden','Figma: 214'],
+  ['Cuándo aparece "Leer más"','—','solo si el texto completo mide más de 216px de alto (más de 9 líneas de 24px). Se mide con JS después de renderizar: si descripcion.scrollHeight > 216 se recorta y aparecen el degradé y "Leer más"; si no, el texto va entero y sin botón. No depende de la cantidad de caracteres. Recalcular al cambiar de obra, al rotar el dispositivo o al cambiar el ancho de la ventana',''],
   ['Degradé de corte','no hay','linear-gradient(to bottom, rgba(17, 9, 16, 0) 62%, #110910 88%)','surface_0'],
   ['Botón "Leer más"','no existe','16px / 24px · 510 · #f5f4f5 · caret-down 16px · gap 8px','body/md-medium'],
   ['Al expandir','—','texto completo, sin degradé, "Leer menos" y caret girado 180°',''],
@@ -765,7 +874,7 @@ const DATA_M = [
   ['Gap descripción → datos','—','24px','spacing/24'],
  ],
  note:'Mismo componente que M-06 de desktop: solo cambia el max-height (304px en desktop, 216px en mobile y tablet).'},
-{id:'M-VA',page:'Footer',sev:'media',title:'Botón "Volver arriba": texto, ícono y estilo',img:'mb-volver',
+{id:'M-VA',added:'17.11',page:'Footer',sev:'media',title:'Botón "Volver arriba": texto, ícono y estilo',img:'mb-volver',
  where:'catalog.css → #filter-trigger cuando cambia a "Ir arriba" · link del footer',
  why:'La web ya hace el cambio correcto: al llegar abajo, el botón Filtrar pasa a ser "Ir arriba". Lo que no coincide con Figma (frame "Home / Mobile / Volver") es el texto, el ícono y el estilo. Además sobra el link "Volver arriba ↑" del footer, porque el botón ya cumple esa función.',
  changes:[
@@ -776,7 +885,7 @@ const DATA_M = [
   ['Distancia al borde inferior','28px','40px',''],
   ['Link "Volver arriba ↑" del footer','visible','quitar',''],
  ]},
-{id:'M-404',page:'Error 404',sev:'media',title:'Página de error en mobile',img:'mb-404',
+{id:'M-404',added:'17.11',page:'Error 404',sev:'media',title:'Página de error en mobile',img:'mb-404',
  where:'vista "Página no encontrada" (@media mobile)',
  why:'Igual que en desktop: Figma usa las burbujas de vidrio y centra el bloque. En la web la esfera ocupa media pantalla y el texto queda abajo.',
  changes:[
@@ -813,6 +922,23 @@ const DATA_M = [
   ['"Ver cómo llegar"','y ≈ 683','y = 740',''],
   ['Cerrar','top 20 · x = 328','top 66 · right 16',''],
  ]},
+{id:'M-FT',page:'Footer',sev:'media',status:'nuevo',added:'17.11',title:'Footer en mobile: sin orbe, fondo degradé y vidrios',img:'mb-footer26',
+ where:'footer (@media mobile) → .footer-orb (eliminar) · fondo · .footer-logo · óvalo "2026" · bloque de texto · logos',
+ why:'Mismo rediseño que desktop (F-05), adaptado a 390 (Figma: Footer, Viewport=Mobile, nodo 704-12159). Se saca la orbe, el fondo pasa a ser el degradé violeta con vidrios y destellos, todo va centrado y los logos se apilan. Medidas redondeadas a valores pares; los logos van con alto automático.',
+ changes:[
+  ['Orbe de luz','visible arriba del logo','eliminar',''],
+  ['Fondo','liso oscuro','linear-gradient(to top, #311c30 0%, #110910 73%)','surface_2 → surface_0'],
+  ['Decoración','2 destellos','3 vidrios (escala 500px) + 6 destellos de 26px, aria-hidden, pointer-events: none',''],
+  ['Alto del footer','≈ 1194px','1308px','Footer · Mobile'],
+  ['Logo "artimañas"','≈ 350px de ancho, abajo de la orbe','358px de ancho · x = 16 · top 136px',''],
+  ['Óvalo "2026"','debajo del logo, sin rotación','Shape 224 × 64 · rotado 2,48° · justo debajo del logo · texto 18px / 28px','Shape · body/lg'],
+  ['Bloque de texto','—','top 418px · padding 16px · gap 24px · todo centrado',''],
+  ['Título','semibold','"Muestra de trabajos finales de Taller de Diseño Multimedial V" · 18px / 28px · 400 · #f5f4f5 · centrado (en mobile no va en semibold)','body/lg · text_base'],
+  ['Descripción','16px aprox.','18px / 28px · #b8adb7 · centrada · gap 8px con el título','body/lg · text_muted'],
+  ['Redes + firma','"Volver arriba ↑" + "Hecho con…" + "© 2026"','redes centradas (32px, gap 24px) · "Hecho con … por alumnes" · "© 2026 Artimañas" · gap 16px · sin "Volver arriba"','body/lg · text_muted'],
+  ['Logos','en fila, cortados','apilados y centrados · gap 32px: UNLP 136px · Facultad de Artes 168px · y en una fila 20 años Diseño Multimedial 114px + T5 tpf 64px con gap 24px (padding-top 12px)',''],
+ ],
+ note:'El botón flotante "Ir arriba" que tapa la firma en la captura es otro componente (ver MB "Volver arriba").'},
 ];
 DATA_T.forEach((d,i)=>{d.vp='tablet';d.id='TB-'+String(i+1).padStart(2,'0')});
 DATA_M.forEach((d,i)=>{d.vp='mobile';d.id='MB-'+String(i+1).padStart(2,'0')});
@@ -829,7 +955,7 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 const swatch=v=>{const m=String(v).match(/#[0-9a-f]{6}\b/i);return m?`<span class="sw" style="background:${m[0]}"></span>`:''};
 const promptFor=d=>{
   const lines=d.changes.map(([p,n,t,tok])=>`- ${p}: hoy "${n}" → debe ser "${t}"${tok?` (token Figma: ${tok})`:''}`).join('\n');
-  return `Visual QA de Artimañas 2026 (${d.page}) · ${d.id} — ${d.title}\nDónde: ${d.where}\nContexto: ${d.why}\nCambios exactos:\n${lines}${d.code?`\nCódigo a usar:\n${d.code}`:''}${d.svg?`\nSVG a usar (reemplaza al emoji, inline o como archivo corazon-pixel.svg):\n${d.svg}`:''}${d.note?`\nNota: ${d.note}`:''}\nRegla: todos los valores de diseño van en grilla de 8 (solo números pares). No cambies nada fuera de esto.`;
+  return `Visual QA de Artimañas 2026 (${d.page}) · ${d.id} — ${d.title}\nDónde: ${d.where}\nContexto: ${d.why}\nCambios exactos:\n${lines}${d.code?`\nCódigo a usar:\n${d.code}`:''}${d.svg?`\nSVG a usar (reemplaza al emoji, inline o como archivo corazon-pixel.svg):\n${d.svg}`:''}${d.frames?`\nReferencias visuales: ${d.frames.map(f=>f[1]).join(' · ')}`:''}${d.note?`\nNota: ${d.note}`:''}\nRegla: todos los valores de diseño van en grilla de 8 (solo números pares). No cambies nada fuera de esto.`;
 };
 async function copy(text,btn,label){
   try{await navigator.clipboard.writeText(text);btn.classList.add('ok');btn.textContent='Copiado';}
@@ -854,7 +980,7 @@ function render(){
       c.innerHTML=`
       <div class="card-head">
         <input type="checkbox" class="check" id="chk-${d.id}" aria-label="Marcar ${esc(d.id)} como resuelto" ${done[d.id]?'checked':''}>
-        <div class="title"><h3>${esc(d.title)}</h3><div class="sub"><span>${esc(d.id)}</span><span class="sev ${d.sev}">${d.sev}</span>${d.status?`<span class="st st-${d.status}">${d.status==="nuevo"?"Nuevo":"Parcial"}</span>`:""}</div></div>
+        <div class="title"><h3>${esc(d.title)}</h3><div class="sub"><span>${esc(d.id)}</span><span class="sev ${d.sev}">${d.sev}</span>${d.status?`<span class="st st-${d.status}">${d.status==="nuevo"?"Nuevo":"Parcial"}${d.added?` · ${esc(d.added)}`:""}</span>`:(d.added?`<span class="st">Actualizado · ${esc(d.added)}</span>`:"")}</div></div>
         <button class="expand" type="button" ${done[d.id]?'':'hidden'}>Ver</button>
       </div>
       <div class="card-body">
@@ -862,6 +988,7 @@ function render(){
           <figure class="shot f"><figcaption>Figma</figcaption><button type="button" data-lb="${d.img}" aria-label="Ampliar comparación"><img src="${im.f}" alt="Diseño en Figma: ${esc(d.title)}" loading="lazy"></button></figure>
           <figure class="shot w"><figcaption>Código</figcaption><button type="button" data-lb="${d.img}" aria-label="Ampliar comparación"><img src="${im.w}" alt="Web actual: ${esc(d.title)}" loading="lazy"></button></figure>
         </div>`:''}
+        ${d.frames?`<div class="frames">${d.frames.map(([src,cap],i)=>`<figure class="frame"><button type="button" data-frame="${i}" aria-label="Ampliar: ${esc(cap)}"><img src="${src}" alt="${esc(cap)}" loading="lazy"></button><figcaption>${esc(cap)}</figcaption></figure>`).join('')}</div>`:''}
         <p class="why">${esc(d.why)}</p>
         <div class="where">Dónde: <code>${esc(d.where)}</code></div>
         <div class="table-wrap"><table>
@@ -871,7 +998,7 @@ function render(){
         ${d.svg?`<div class="asset"><div class="asset-preview" aria-hidden="true">${d.svg}</div><div class="asset-code"><div class="asset-head"><span>corazon-pixel.svg · 20 × 20</span><button class="copy" type="button" data-svg="1">Copiar SVG</button></div><pre><code>${esc(d.svg)}</code></pre></div></div>`:''}
         ${d.code?`<div class="asset-code"><div class="asset-head"><span>${esc(d.codeName||'código')}</span><button class="copy" type="button" data-code="1">Copiar código</button></div><pre><code>${esc(d.code)}</code></pre></div>`:''}
         ${d.note?`<p class="note">${esc(d.note)}</p>`:''}
-        <div class="actions"><button class="btn-prompt" type="button">Copiar prompt para la IA</button></div>
+        <div class="actions"><button class="btn-prompt" type="button">Copiar prompt para la IA</button>${d.demo?`<a class="btn-demo" href="${esc(d.demo)}" target="_blank" rel="noopener">Ver prototipo ↗</a>`:''}</div>
       </div>`;
       c.querySelector('.check').addEventListener('change',e=>toggle(d.id,e.target.checked));
       c.querySelector('.expand').addEventListener('click',e=>{c.classList.toggle('open');e.target.textContent=c.classList.contains('open')?'Ocultar':'Ver'});
@@ -880,6 +1007,7 @@ function render(){
       c.querySelectorAll('.copy:not([data-svg]):not([data-code])').forEach(b=>b.addEventListener('click',()=>copy(b.dataset.copy,b,'Copiar')));
       c.querySelectorAll('.copy[data-svg]').forEach(b=>b.addEventListener('click',()=>copy(d.svg,b,'Copiar SVG')));
       c.querySelectorAll('[data-lb]').forEach(b=>b.addEventListener('click',()=>openLb(d)));
+      c.querySelectorAll('[data-frame]').forEach(b=>b.addEventListener('click',()=>openFrame(d.frames[+b.dataset.frame])));
       wrap.appendChild(c);
     });
     list.appendChild(sec);
@@ -911,14 +1039,27 @@ function buildTabs(){
     const n=(i+(e.key==='ArrowRight'?1:-1)+VPS.length)%VPS.length;setVp(VPS[n][0],true);});
 }
 addEventListener('hashchange',()=>{const h=location.hash.slice(1);if(h!==vp&&VPS.some(v=>v[0]===h))setVp(h)});
+// Filtro por fecha de alta: "new:17.11" muestra solo las cards con added:'17.11'
+const isNewFilter=()=>filter.startsWith('new:');
 function applyFilter(){
-  document.querySelectorAll('section.page').forEach(s=>s.classList.toggle('hidden-by-filter',filter!=='Todas'&&s.dataset.page!==filter));
-  document.querySelectorAll('.card').forEach(c=>c.classList.toggle('hidden-by-filter',!showDone&&c.classList.contains('done')));
+  const day=isNewFilter()?filter.slice(4):null;
+  document.querySelectorAll('.card').forEach(c=>{
+    const d=DATA.find(x=>x.id===c.id);
+    const hide=(!showDone&&c.classList.contains('done'))||(day&&d.added!==day);
+    c.classList.toggle('hidden-by-filter',!!hide);
+  });
+  document.querySelectorAll('section.page').forEach(s=>{
+    const byPage=filter!=='Todas'&&!day&&s.dataset.page!==filter;
+    const empty=day&&!s.querySelector('.card:not(.hidden-by-filter)');
+    s.classList.toggle('hidden-by-filter',!!(byPage||empty));
+  });
 }
 function buildFilters(){
   const f=document.getElementById('filters');f.innerHTML='';
-  ['Todas',...PAGES.filter(p=>cur().some(d=>d.page===p))].forEach(p=>{const b=document.createElement('button');b.type='button';b.className='chip';b.textContent=p;b.setAttribute('aria-pressed',p===filter);
-    b.addEventListener('click',()=>{filter=p;f.querySelectorAll('.chip[data-f]').forEach(x=>x.setAttribute('aria-pressed',x.textContent===p));applyFilter()});b.dataset.f='1';f.appendChild(b)});
+  const days=[...new Set(cur().filter(d=>d.added).map(d=>d.added))];
+  const opts=[['Todas','Todas'],...days.map(dy=>['new:'+dy,'Nuevos '+dy]),...PAGES.filter(p=>cur().some(d=>d.page===p)).map(p=>[p,p])];
+  opts.forEach(([val,label])=>{const b=document.createElement('button');b.type='button';b.className='chip'+(val.startsWith('new:')?' chip-new':'');b.textContent=label;b.dataset.val=val;b.setAttribute('aria-pressed',val===filter);
+    b.addEventListener('click',()=>{filter=val;f.querySelectorAll('.chip[data-f]').forEach(x=>x.setAttribute('aria-pressed',x.dataset.val===val));applyFilter()});b.dataset.f='1';f.appendChild(b)});
   const t=document.createElement('button');t.type='button';t.className='chip toggle-done';t.textContent='Ocultar resueltas';t.setAttribute('aria-pressed',String(!showDone));
   t.addEventListener('click',()=>{showDone=!showDone;t.setAttribute('aria-pressed',String(!showDone));applyFilter()});f.appendChild(t);
 }
@@ -927,6 +1068,13 @@ function openLb(d){
   closeLb();const im=IMG(d.img);
   lb=document.createElement('div');lb.className='lb';lb.setAttribute('role','dialog');lb.setAttribute('aria-label','Comparación ampliada');
   lb.innerHTML=`<figure><figcaption>Figma</figcaption><img src="${im.f}" alt=""></figure><figure><figcaption>Código</figcaption><img src="${im.w}" alt=""></figure><button class="lb-close" type="button">Cerrar</button>`;
+  lb.addEventListener('click',e=>{if(e.target===lb||e.target.classList.contains('lb-close'))closeLb()});
+  document.body.appendChild(lb);lb.querySelector('.lb-close').focus();
+}
+function openFrame([src,cap]){
+  closeLb();
+  lb=document.createElement('div');lb.className='lb lb-one';lb.setAttribute('role','dialog');lb.setAttribute('aria-label',cap);
+  lb.innerHTML=`<figure><figcaption>${esc(cap)}</figcaption><img src="${src}" alt=""></figure><button class="lb-close" type="button">Cerrar</button>`;
   lb.addEventListener('click',e=>{if(e.target===lb||e.target.classList.contains('lb-close'))closeLb()});
   document.body.appendChild(lb);lb.querySelector('.lb-close').focus();
 }
