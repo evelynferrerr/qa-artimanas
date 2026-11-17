@@ -224,6 +224,29 @@ const DATA = [
   ['.work-category margin','0 0 10px','gap 12px (spacing/12)',''],
   ['line-height con decimales','22,4 · 27 · 16,5 · 14,3 · 19,5 · 26,496','usar los line-height enteros de G-02',''],
  ]},
+{id:'G-04',page:'Global',sev:'media',status:'nuevo',added:'17.11',title:'Cursor: que no reemplace al mouse, que sea una bolita que lo sigue',img:null,
+ where:'base.css → html.has-custom-cursor (cursor: none) · #custom-cursor · JS del cursor',
+ why:'Hoy el cursor del sistema se oculta en toda la página (cursor: none !important) y en su lugar se ve un punto blanco de 12px. La idea es mantener el cursor normal del sistema y sumar una bolita que lo sigue con un retraso muy chico, como un acompañante.',
+ changes:[
+  ['Cursor del sistema','oculto: html.has-custom-cursor * { cursor: none !important }','visible: sacar esa regla (las flechas, manitos y cursores de texto siguen funcionando)',''],
+  ['Bolita','punto blanco de 12px que reemplaza al cursor','bolita de 12px #f5f4f5 que sigue al cursor con un retraso corto, centrada en la punta del mouse','text_base'],
+  ['Retraso','ninguno (va pegada al mouse)','suavizado por frame: posición += (mouse - posición) × 0,2 con requestAnimationFrame (≈ 100ms de retraso)',''],
+  ['Capa','z-index 200','pointer-events: none y aria-hidden; no tiene que tapar ni bloquear clicks',''],
+  ['Dónde aparece','—','solo en dispositivos con mouse: @media (hover: hover) and (pointer: fine); en touch no se muestra',''],
+  ['Al salir de la ventana','—','la bolita se desvanece (opacity 0, 160ms) y vuelve al entrar',''],
+  ['Reduced motion','—','con prefers-reduced-motion: reduce, sin retraso (va pegada) o directamente sin bolita',''],
+ ],
+ code:`const dot = document.getElementById('custom-cursor');
+let x = 0, y = 0, tx = 0, ty = 0;
+addEventListener('pointermove', e => { tx = e.clientX; ty = e.clientY; dot.style.opacity = 1; });
+document.addEventListener('pointerleave', () => { dot.style.opacity = 0; });
+(function loop(){
+  x += (tx - x) * 0.2;   // 0.2 = retraso corto; más bajo = más lento
+  y += (ty - y) * 0.2;
+  dot.style.transform = \`translate3d(\${x - 6}px, \${y - 6}px, 0)\`; // 6 = mitad de 12px
+  requestAnimationFrame(loop);
+})();`, codeName:'Cursor que sigue al mouse · JS',
+ note:'Si en Figma existe la documentación del cursor (estados sobre links o imágenes, por ejemplo "Cerrar" en el fondo del modal, ver M-09), se suma a esta card.'},
 // ---------- HOME ----------
 {id:'H-01',page:'Home',sev:'alta',title:'Nav: margen lateral y alto',img:'nav',
  where:'base.css → :root (--page-margin, --nav-height) · .site-nav · .desktop-nav',
@@ -252,7 +275,7 @@ const DATA = [
  why:'En Figma el hero mide 900 de alto y la cinta del marquee arranca en y = 740. En la web el hero mide 810, la cinta queda 32px más arriba y la lista de alumnos asoma en el primer pantallazo.',
  changes:[
   ['Alto de .hero','810px','900px (100vh en desktop)',''],
-  ['Top de la cinta .marquee','708px','740px',''],
+  ['Top de la cinta .marquee','708px','707px (hero actualizado el 17.11, ver H-16)',''],
   ['line-height del marquee','27px','28px','body/lg'],
   ['Separador entre textos','"•" chico','"*" (asterisco), como en Figma',''],
   ['Alineación vertical de la cinta','textos y asteriscos desalineados: el "*" queda pegado arriba (el glifo del asterisco se dibuja alto en la línea)','todos los elementos centrados en el eje vertical de la cinta: display: flex; align-items: center en cada grupo; el "*" centrado con la altura de los textos (line-height: 1 + translateY, o un ícono/SVG de asterisco centrado)','Banner'],
@@ -266,7 +289,7 @@ const DATA = [
   ['Sombra del óvalo (.eyebrow)','box-shadow: 0 1px 3px rgba(16, 8, 15, .4)','box-shadow: none',''],
   ['Sombra del texto del óvalo','text-shadow: 0 1px 3px #10080f','text-shadow: none',''],
   ['Oscurecido (.hero::before)','linear-gradient que empieza al 57% del hero (≈ y 460) y llega a #10080f','sin oscurecido sobre el logo: el paso a negro empieza debajo del marquee (≈ y 820), como en el frame Hero',''],
-  ['Degradé por sesión','varía en cada visita','dejarlo así (decisión de diseño)',''],
+  ['Degradé por sesión','varía en cada visita','el hero nuevo (H-16) usa una imagen de fondo fija: confirmar con diseño si sigue variando por sesión',''],
  ],
  note:'Si alguna sombra se agregó para mejorar el contraste con algún degradé muy claro, avisar a diseño para resolverlo desde la paleta del degradé y no con sombras.'},
 {id:'H-05',page:'Home',sev:'media',title:'Espacio entre el hero y la lista',img:null,
@@ -351,6 +374,35 @@ setTimeout(()=>{if(hero.classList.contains('loading'))finish()},4000); // respal
  codeName:'Secuencia de carga · CSS + JS (adaptar nombres de clases)',
  demo:'artimanas-hero.html',
  note:'Prototipo de referencia: artimanas-hero.html (abrir y usar "Repetir carga"). --center-shift es la distancia entre el centro del logo y el centro de la pantalla, calculada con JS antes de empezar. El botón "Repetir carga" es solo para revisar: no va en producción.'},
+{id:'H-16',page:'Home',sev:'alta',status:'nuevo',added:'17.11',title:'Hero actualizado: fondo nuevo con vidrios',img:'hero26',
+ where:'hero-layout.css → .hero (fondo) · capa decorativa nueva · .marquee',
+ why:'El hero se rediseñó (Figma: Home / Desktop → Hero, nodo 1515-22924). El fondo ya no es el degradé naranja y violeta: ahora es una imagen con grano que va de negro a la izquierda, a magenta en el centro y violeta a la derecha, con tres vidrios grandes encima y un oscurecido abajo. El nav, el óvalo y el logo quedan en el mismo lugar; la cinta sube a y = 707.',
+ changes:[
+  ['Fondo','degradé naranja / violeta que cambia por sesión','imagen de fondo exportada de Figma ("image 2" + "image 3", 1604 × 902, object-fit: cover): negro → magenta → violeta con grano',''],
+  ['Vidrios','no hay','3 imágenes "Glass" exportadas de Figma: Glass 13 a la izquierda (rotado 9°) y Glass 6 arriba al centro, detrás del logo; Glass 16 a la derecha (rotado 28°), por delante del logo',''],
+  ['Oscurecido inferior','—','imagen "Rectangle" de 1811 × 344 desde y = 558, que funde el fondo hacia el negro debajo de la cinta',''],
+  ['Cinta (Banner)','top 708px','top 707px · mismo componente (bordes 2px blancos, 18px / 28px)','Banner'],
+  ['Óvalo + logo','—','sin cambios: bloque centrado desde y = 268 (óvalo 310 × 77 rotado 2,48° + logo 1008 × 182)',''],
+  ['Movimiento','—','el fondo se mueve levemente siguiendo el cursor (anotación de Figma, referencia monopo.london)',''],
+  ['Decoración','—','aria-hidden y pointer-events: none en vidrios y oscurecido; el vidrio de adelante no tiene que tapar clicks del nav',''],
+ ],
+ note:'La animación de carga (H-15) se mantiene igual con este fondo. El prototipo todavía usa el fondo anterior: tomar de ahí solo los tiempos y el movimiento.'},
+{id:'H-17',page:'Home',sev:'alta',status:'nuevo',added:'17.11',title:'Modal de filtros: tiene que ser un popover chico sobre el botón Filtrar',img:null,
+ frames:[['hero-filtro-web.jpg','Web actual · modal grande de 600px con fondo desenfocado']],
+ where:'catalog.css / app.js → .filter-dialog · #filter-trigger',
+ why:'En la web el filtro abre un modal grande (600px de ancho, esquinas de 24px solo arriba, fondo desenfocado) con la lista de categorías sin conteos, un botón "Mostrar 32 obras" y "Borrar filtros". En Figma es un popover chico que se abre justo arriba del botón Filtrar, sin tapar la página: título apagado, cruz para cerrar, "Todas", cada categoría con su cantidad de obras, tilde en las elegidas y "Borrar filtros (n)" al final. Los cambios se aplican al tocar, sin botón de confirmar.',
+ changes:[
+  ['Tipo de componente','<dialog> modal centrado abajo · 600px · radius 24 24 0 0 · fondo desenfocado','popover anclado arriba del botón Filtrar, sin fondo desenfocado ni bloqueo de la página',''],
+  ['Encabezado','"Filtrar obras" en blanco + botón circular violeta para cerrar','"Filtrar obras" en gris apagado (#b8adb7) + ícono x de 20px sin fondo','text_muted'],
+  ['Primer ítem','no existe','"Todas": limpia los filtros',''],
+  ['Ítems','solo el nombre','nombre + cantidad de obras entre paréntesis, por ejemplo "Entorno (6)"',''],
+  ['Selección','checkbox nativo oculto, sin marca visible','tilde (check) a la derecha de cada categoría elegida · se pueden elegir varias',''],
+  ['Confirmar','botón "Mostrar 32 obras"','sin botón: el filtro se aplica al tocar cada ítem',''],
+  ['Borrar','"Borrar filtros"','"Borrar filtros (n)" subrayado al final, con la cantidad de filtros activos',''],
+  ['Botón Filtrar','"Filtrar"','"Filtrar (n)" con la cantidad de filtros activos (ver H-12)','Hand off · 11'],
+  ['Categorías','Alienación · Entorno · Identidad · Sensorialidad · Sinergia','Figma muestra Cuerpo · Entorno · Identidad · Sensorialidad · Sinergia: confirmar con diseño si "Alienación" se reemplaza por "Cuerpo"',''],
+ ],
+ note:'Falta el link del frame de Figma para sumar la captura y las medidas exactas (ancho del popover, padding, radius y tipografía). Las de esta card salen de la captura de diseño.'},
 {id:'H-08',page:'Home',sev:'alta',title:'Falta un alumno en la lista: Bareiro Quevedo, Elias Gabriel',img:'missing',
  where:'datos de alumnos/obras (el JSON o array que alimenta la lista)',
  why:'En Figma (Home y Hand off) aparece "Bareiro Quevedo, Elias Gabriel" entre Aroza y Besnati. En la web no está: hay 32 nombres en vez de 33. "Joselevich" sí puede faltar: el handoff aclara que es un easter egg del mockup.',
@@ -782,6 +834,16 @@ const DATA_T = [
   ['Logos','3 (Facultad de Artes y Diseño Multimedial con otros dibujos)','4 en fila, space-between: UNLP 136px · Facultad de Artes 172px · 20 años Diseño Multimedial 114px · T5 tpf 64px de ancho (ver F-04)',''],
  ],
  note:'El botón flotante "Ir arriba" que aparece en la captura es otro componente (ver TB "Volver arriba").'},
+{id:'T-HN',page:'Home',sev:'alta',status:'nuevo',added:'17.11',title:'Hero actualizado en tablet: fondo nuevo con vidrios',img:'tb-hero26',
+ where:'hero-layout.css (@media tablet) → .hero (fondo) · capa decorativa · logo apilado · .marquee',
+ why:'Mismo cambio que desktop (H-16), adaptado a 768 (Figma: Home / Tablet → hero, nodo 1515-25739). Fondo de imagen negro → magenta → violeta con tres vidrios y un fundido a surface_0 abajo. Las medidas del logo y el óvalo son las de T-01.',
+ changes:[
+  ['Fondo','degradé naranja / violeta','imagen de fondo de Figma (la misma que desktop, recortada) + degradé a #110910 en la parte de abajo','surface_0'],
+  ['Vidrios','no hay','Glass 13, Glass 6 y Glass 16 (≈ 880–940px, rotados), aria-hidden y pointer-events: none',''],
+  ['Logo apilado','≈ 294px de ancho','435 × 465px · x = 166 · y = 217 (ver T-01)',''],
+  ['Óvalo','215 × 47','Shape 310 × 77 · rotado 2,48° · y = 145 · 18px / 28px','body/lg'],
+  ['Cinta (Banner)','12px / 18px · y = 849','18px / 28px · 60px desde el borde inferior del hero (top ≈ 727)','Banner'],
+ ]},
 ];
 
 // ---------- MOBILE (390) ----------
@@ -939,6 +1001,15 @@ const DATA_M = [
   ['Logos','en fila, cortados','apilados y centrados · gap 32px: UNLP 136px · Facultad de Artes 168px · y en una fila 20 años Diseño Multimedial 114px + T5 tpf 64px con gap 24px (padding-top 12px)',''],
  ],
  note:'El botón flotante "Ir arriba" que tapa la firma en la captura es otro componente (ver MB "Volver arriba").'},
+{id:'M-HN',page:'Home',sev:'alta',status:'nuevo',added:'17.11',title:'Hero actualizado en mobile: fondo nuevo con vidrios',img:'mb-hero26',
+ where:'hero-layout.css (@media mobile) → .hero (fondo) · capa decorativa · bloque óvalo + logo · .marquee',
+ why:'Mismo cambio que desktop (H-16), adaptado a 390 (Figma: Home / Mobile → hero, nodo 1515-25549). Fondo de imagen con vidrios más chicos y fundido a surface_0 abajo. El óvalo y el logo apilado van en un bloque centrado.',
+ changes:[
+  ['Fondo','degradé naranja / violeta','imagen de fondo de Figma (la misma que desktop, recortada) + degradé a #110910 en la parte de abajo','surface_0'],
+  ['Vidrios','no hay','Glass 13, Glass 16 y Glass 6 (≈ 480–630px, rotados), aria-hidden y pointer-events: none',''],
+  ['Bloque óvalo + logo','logo ≈ 238px de ancho','bloque centrado (40px arriba del centro del hero) · gap 8px · óvalo Shape 294 × 77 con padding 0 32px · logo apilado ≈ 326px de ancho (ver M-H1)',''],
+  ['Cinta (Banner)','12px / 18px · y = 691','18px / 28px · 64px desde el borde inferior del hero (top ≈ 722)','Banner'],
+ ]},
 ];
 DATA_T.forEach((d,i)=>{d.vp='tablet';d.id='TB-'+String(i+1).padStart(2,'0')});
 DATA_M.forEach((d,i)=>{d.vp='mobile';d.id='MB-'+String(i+1).padStart(2,'0')});
